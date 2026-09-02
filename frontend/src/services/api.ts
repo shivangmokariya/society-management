@@ -5,10 +5,7 @@ const getBaseHost = (): string => {
   if (process.env.EXPO_PUBLIC_API_URL) {
     return process.env.EXPO_PUBLIC_API_URL.replace(/\/api\/?$/, '');
   }
-  if (Platform.OS === 'android') {
-    return 'http://10.0.2.2:5000';
-  }
-  return 'http://localhost:5000';
+  return 'https://society-management-2-chie.onrender.com';
 };
 
 export const API_HOST = getBaseHost();
