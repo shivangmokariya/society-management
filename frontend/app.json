@@ -28,6 +28,11 @@
         "backgroundColor": "#faf9f4"
       }
     },
+    "androidStatusBar": {
+      "barStyle": "dark-content",
+      "backgroundColor": "#faf9f4",
+      "translucent": true
+    },
     "web": {
       "favicon": "./assets/favicon.png",
       "bundler": "metro"

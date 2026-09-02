@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, Platform, StatusBar } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../theme/colors';
@@ -16,6 +16,8 @@ interface HeaderProps {
   avatarUrl?: string;
   onAvatarPress?: () => void;
 }
+
+const STATUSBAR_HEIGHT = Platform.OS === 'android' ? (StatusBar.currentHeight || 24) : 0;
 
 export const Header: React.FC<HeaderProps> = ({
   title,
@@ -62,9 +64,10 @@ export const Header: React.FC<HeaderProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    height: 64,
+    paddingTop: STATUSBAR_HEIGHT,
+    height: 64 + STATUSBAR_HEIGHT,
     paddingHorizontal: spacing.containerPaddingMobile,
-    backgroundColor: 'rgba(250, 249, 244, 0.9)',
+    backgroundColor: 'rgba(250, 249, 244, 0.95)',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
