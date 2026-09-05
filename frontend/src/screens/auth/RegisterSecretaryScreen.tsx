@@ -30,6 +30,20 @@ export const RegisterSecretaryScreen: React.FC<RegisterSecretaryScreenProps> = (
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
+  const resetForm = () => {
+    setFullName('');
+    setSocietyName('');
+    setEmail('');
+    setPhone('');
+    setErrorMsg('');
+    setIsSubmitted(false);
+  };
+
+  const handleBackToLogin = () => {
+    resetForm();
+    navigation.navigate('Login');
+  };
+
   const handleSubmit = async () => {
     setErrorMsg('');
     if (!fullName || !societyName || !email || !phone) {
@@ -48,6 +62,10 @@ export const RegisterSecretaryScreen: React.FC<RegisterSecretaryScreenProps> = (
 
       if (response.success) {
         setIsSubmitted(true);
+        setFullName('');
+        setSocietyName('');
+        setEmail('');
+        setPhone('');
       } else {
         setErrorMsg(response.message || 'Registration request failed.');
       }
@@ -66,7 +84,7 @@ export const RegisterSecretaryScreen: React.FC<RegisterSecretaryScreenProps> = (
       <Header
         title="Register Secretary"
         showBack
-        onBackPress={() => navigation.goBack()}
+        onBackPress={handleBackToLogin}
       />
 
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
@@ -199,8 +217,8 @@ export const RegisterSecretaryScreen: React.FC<RegisterSecretaryScreenProps> = (
             <Text style={styles.successDesc}>
               Thank you for registering. Our team will review your application and contact you at your email address shortly.
             </Text>
-            <TouchableOpacity style={styles.backBtn} activeOpacity={0.8} onPress={() => setIsSubmitted(false)}>
-              <Text style={styles.backBtnText}>Back to Registration</Text>
+            <TouchableOpacity style={styles.backBtn} activeOpacity={0.8} onPress={handleBackToLogin}>
+              <Text style={styles.backBtnText}>Back to Login</Text>
             </TouchableOpacity>
           </View>
         )}

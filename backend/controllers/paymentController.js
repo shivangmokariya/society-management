@@ -43,6 +43,8 @@ exports.addResidentPayment = asyncHandler(async (req, res) => {
     }
   }
 
+  const Transaction = require('../models/Transaction');
+
   const payment = await MaintenancePayment.create({
     society: societyId,
     resident: resident._id,
@@ -55,6 +57,16 @@ exports.addResidentPayment = asyncHandler(async (req, res) => {
     status: status || 'On Time',
     monthPeriod: monthPeriod || 'August 2026',
     paymentMethod: paymentMethod || 'UPI',
+  });
+
+  // Automatically record credit transaction in financial ledger
+  await Transaction.create({
+    society: societyId,
+    title: `Maintenance Payment - Flat ${resident.flat} (${payment.payerName})`,
+    category: 'Maintenance',
+    date: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit' }),
+    amount: payment.amount,
+    isCredit: true,
   });
 
   // Update resident payment status if needed

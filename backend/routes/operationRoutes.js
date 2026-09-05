@@ -30,6 +30,7 @@ router.put('/assets/:id', operationController.updateAsset);
 
 // Water Tanks
 router.get('/water-tanks', operationController.getWaterTanks);
+router.get('/water-tankers', operationController.getWaterTankers);
 router.put('/water-tanks/:id', operationController.updateWaterTank);
 router.post('/record-tanker', operationController.recordTanker);
 

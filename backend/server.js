@@ -7,15 +7,20 @@ const path = require('path');
 const connectDB = require('./config/db');
 const routes = require('./routes');
 const errorHandler = require('./middleware/errorHandler');
+const logger = require('./utils/logger');
 
 // Load environment variables
-dotenv.config();
+dotenv.config({ path: path.join(__dirname, '.env') });
 
 // Initialize Express app
 const app = express();
 
-// Connect to MongoDB
-connectDB();
+const seedAdmin = require('./utils/seedAdmin');
+
+// Connect to MongoDB & Seed Admin
+connectDB().then(() => {
+  seedAdmin();
+});
 
 // Security and HTTP Middlewares
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
@@ -23,12 +28,11 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// HTTP Request Logging (console stdout only)
+app.use(morgan('dev'));
+
 // Serve static assets from /public folder
 app.use('/public', express.static(path.join(__dirname, 'public')));
-
-if (process.env.NODE_ENV === 'development') {
-  app.use(morgan('dev'));
-}
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -56,16 +60,14 @@ app.use(errorHandler);
 // Start server
 const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, () => {
-  console.log(`
-  🚀 CALM Backend Server running in [${process.env.NODE_ENV || 'development'}] mode on port ${PORT}
-  👉 API Base URL: http://localhost:${PORT}/api
-  👉 Health Check: http://localhost:${PORT}/health
-  `);
+  logger.info(`🚀 CALM Backend Server running in [${process.env.NODE_ENV || 'development'}] mode on port ${PORT}`);
+  logger.info(`👉 API Base URL: http://localhost:${PORT}/api`);
+  logger.info(`👉 Health Check: http://localhost:${PORT}/health`);
 });
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {
-  console.error(`Unhandled Rejection Error: ${err.message}`);
+  logger.error(`Unhandled Rejection Error: ${err.message}`, err);
 });
 
 module.exports = app;

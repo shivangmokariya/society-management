@@ -3,6 +3,7 @@ import { request, ApiResponse } from './api';
 export interface LoginPayload {
   email: string;
   password: string;
+  rememberMe?: boolean;
 }
 
 export interface RegisterSecretaryPayload {
@@ -25,6 +26,7 @@ export interface UserProfile {
 export interface LoginResponse {
   user: UserProfile;
   token: string;
+  expiresInDays?: number;
 }
 
 export const authService = {

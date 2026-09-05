@@ -6,7 +6,8 @@
   "scripts": {
     "build": "echo 'Build complete'",
     "start": "node backend/server.js",
-    "dev": "node backend/server.js"
+    "dev": "nodemon --ignore *.log --ignore application.log --ignore backend/*.log backend/server.js",
+    "admin": "npm --prefix admin-frontend run dev"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

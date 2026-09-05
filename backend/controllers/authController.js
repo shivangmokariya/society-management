@@ -11,9 +11,28 @@ exports.registerSecretary = asyncHandler(async (req, res) => {
   );
 });
 
+exports.getSecretaryRegistrations = asyncHandler(async (req, res) => {
+  const { status } = req.query;
+  const result = await authService.getSecretaryRegistrations(status);
+  return ApiResponse.success(res, 'Registrations retrieved successfully', result);
+});
+
+exports.approveSecretary = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { customPassword } = req.body;
+  const result = await authService.approveSecretary(id, customPassword);
+  return ApiResponse.success(res, 'Secretary registration approved successfully', result);
+});
+
+exports.rejectSecretary = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const result = await authService.rejectSecretary(id);
+  return ApiResponse.success(res, 'Secretary registration rejected successfully', result);
+});
+
 exports.login = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
-  const result = await authService.login(email, password);
+  const { email, password, rememberMe } = req.body;
+  const result = await authService.login(email, password, rememberMe);
   return ApiResponse.success(res, 'Login successful', result);
 });
 
@@ -32,7 +51,7 @@ exports.uploadAvatar = asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, message: 'Please select an image file to upload.' });
   }
 
-  const avatarUrl = `/public/uploads/avatars/${req.file.filename}`;
+  const avatarUrl = req.file.path || req.file.secure_url || `/public/uploads/avatars/${req.file.filename}`;
   return ApiResponse.success(res, 'Avatar image uploaded successfully', { avatarUrl });
 });
 

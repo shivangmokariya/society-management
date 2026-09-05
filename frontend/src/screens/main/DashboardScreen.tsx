@@ -16,14 +16,17 @@ import { colors } from '../../theme/colors';
 import { typography } from '../../theme/typography';
 import { borderRadius, spacing } from '../../theme/spacing';
 import { initialSocietyData } from '../../data/mockData';
-import { societyService, DashboardData } from '../../services/societyService';
+import { StatBreakdownModal } from '../../components/StatBreakdownModal';
+import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
+import { societyService, DashboardData } from '../../services/societyService';
 
 export const DashboardScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const { user, token } = useAuth();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedStatType, setSelectedStatType] = useState<'balance' | 'income' | 'expenses' | 'dues' | null>(null);
 
   const fetchDashboard = async () => {
     try {
@@ -39,9 +42,11 @@ export const DashboardScreen: React.FC<{ navigation: any }> = ({ navigation }) =
     }
   };
 
-  useEffect(() => {
-    fetchDashboard();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchDashboard();
+    }, [token])
+  );
 
   const stats = dashboardData?.dashboardStats;
   const society = dashboardData?.society;
@@ -80,24 +85,28 @@ export const DashboardScreen: React.FC<{ navigation: any }> = ({ navigation }) =
               value={stats?.currentBalance || initialSocietyData.currentBalance}
               accentColor="rgba(125, 166, 142, 0.2)"
               textColor={colors.onSurface}
+              onPress={() => setSelectedStatType('balance')}
             />
             <StatCard
               label="Income (This Month)"
               value={stats?.monthlyIncome || initialSocietyData.monthlyIncome}
               accentColor="rgba(182, 236, 241, 0.2)"
               textColor={colors.secondary}
+              onPress={() => setSelectedStatType('income')}
             />
             <StatCard
               label="Expenses"
               value={stats?.monthlyExpenses || initialSocietyData.monthlyExpenses}
               accentColor="rgba(255, 218, 214, 0.3)"
               textColor={colors.error}
+              onPress={() => setSelectedStatType('expenses')}
             />
             <StatCard
               label="Pending Dues"
               value={`${stats?.pendingDuesFlats ?? initialSocietyData.pendingDuesFlats} Flats`}
               accentColor="rgba(135, 159, 191, 0.2)"
               textColor={colors.tertiary}
+              onPress={() => setSelectedStatType('dues')}
             />
           </View>
         </View>
@@ -258,6 +267,15 @@ export const DashboardScreen: React.FC<{ navigation: any }> = ({ navigation }) =
           </ScrollView>
         </View>
       </ScrollView>
+
+      <StatBreakdownModal
+        visible={!!selectedStatType}
+        type={selectedStatType}
+        onClose={() => setSelectedStatType(null)}
+        onNavigate={(screen) => navigation.navigate(screen)}
+        stats={stats}
+        transactions={dashboardData?.recentTransactions}
+      />
     </View>
   );
 };

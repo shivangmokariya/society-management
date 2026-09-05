@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authService, UserProfile, LoginPayload, RegisterSecretaryPayload } from '../services/authService';
+import { storage } from '../utils/storage';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -16,21 +17,48 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(() => {
+    const storedUser = storage.getItem('calm_user');
+    const storedExpiry = storage.getItem('calm_expiry');
+    if (storedUser && storedExpiry && Date.now() < Number(storedExpiry)) {
+      try {
+        return JSON.parse(storedUser);
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  });
+
+  const [token, setToken] = useState<string | null>(() => {
+    const storedToken = storage.getItem('calm_token');
+    const storedExpiry = storage.getItem('calm_expiry');
+    if (storedToken && storedExpiry && Date.now() < Number(storedExpiry)) {
+      return storedToken;
+    }
+    return null;
+  });
+
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Restore session on initial app boot
+  // Restore and verify session on initial app boot
   useEffect(() => {
     const restoreSession = async () => {
       try {
-        if (token) {
-          const res = await authService.getMe(token);
+        const storedToken = storage.getItem('calm_token');
+        const storedExpiry = storage.getItem('calm_expiry');
+
+        if (storedToken && storedExpiry && Date.now() < Number(storedExpiry)) {
+          setToken(storedToken);
+          const res = await authService.getMe(storedToken);
           if (res.success && res.data) {
             setUser(res.data);
+            storage.setItem('calm_user', JSON.stringify(res.data));
           } else {
             logout();
           }
+        } else if (storedToken || storedExpiry) {
+          logout();
         }
       } catch (err) {
         console.warn('Session restoration failed:', err);
@@ -43,44 +71,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (payload: LoginPayload) => {
-    setIsLoading(true);
-    try {
-      const res = await authService.login(payload);
-      if (res.success && res.data) {
-        setToken(res.data.token);
-        setUser(res.data.user);
-      } else {
-        throw new Error(res.message || 'Login failed');
-      }
-    } finally {
-      setIsLoading(false);
+    const res = await authService.login(payload);
+    if (res.success && res.data) {
+      const { token: newToken, user: newUser, expiresInDays } = res.data;
+      const days = expiresInDays || (payload.rememberMe ? 30 : 7);
+      const expiryTimestamp = Date.now() + days * 24 * 60 * 60 * 1000;
+
+      setToken(newToken);
+      setUser(newUser);
+      storage.setItem('calm_token', newToken);
+      storage.setItem('calm_user', JSON.stringify(newUser));
+      storage.setItem('calm_expiry', expiryTimestamp.toString());
+    } else {
+      throw new Error(res.message || 'Login failed');
     }
   };
 
   const registerSecretary = async (payload: RegisterSecretaryPayload) => {
-    setIsLoading(true);
-    try {
-      const res = await authService.registerSecretary(payload);
-      if (!res.success) {
-        throw new Error(res.message || 'Registration failed');
-      }
-    } finally {
-      setIsLoading(false);
+    const res = await authService.registerSecretary(payload);
+    if (!res.success) {
+      throw new Error(res.message || 'Registration failed');
     }
   };
 
   const updateProfile = async (payload: { fullName?: string; phone?: string; avatarUrl?: string }) => {
     if (!token) throw new Error('Not authenticated');
-    setIsLoading(true);
-    try {
-      const res = await authService.updateProfile(token, payload);
-      if (res.success && res.data) {
-        setUser(res.data);
-      } else {
-        throw new Error(res.message || 'Profile update failed');
-      }
-    } finally {
-      setIsLoading(false);
+    const res = await authService.updateProfile(token, payload);
+    if (res.success && res.data) {
+      setUser(res.data);
+      storage.setItem('calm_user', JSON.stringify(res.data));
+    } else {
+      throw new Error(res.message || 'Profile update failed');
     }
   };
 
@@ -97,6 +118,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     setUser(null);
     setToken(null);
+    storage.removeItem('calm_token');
+    storage.removeItem('calm_user');
+    storage.removeItem('calm_expiry');
   };
 
   return (

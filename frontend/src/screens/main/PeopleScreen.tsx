@@ -14,6 +14,7 @@ import { Header } from '../../components/Header';
 import { colors } from '../../theme/colors';
 import { typography } from '../../theme/typography';
 import { borderRadius, spacing } from '../../theme/spacing';
+import { useFocusEffect } from '@react-navigation/native';
 import { initialSocietyData, Resident } from '../../data/mockData';
 import { residentService } from '../../services/residentService';
 import { societyService } from '../../services/societyService';
@@ -64,10 +65,12 @@ export const PeopleScreen: React.FC<{ navigation: any }> = () => {
     }
   };
 
-  useEffect(() => {
-    fetchResidentsList();
-    fetchSocietyDetails();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchResidentsList();
+      fetchSocietyDetails();
+    }, [])
+  );
 
   const handleOpenPaymentHistory = (resident: any) => {
     setSelectedResident(resident);
@@ -277,6 +280,10 @@ export const PeopleScreen: React.FC<{ navigation: any }> = () => {
         onClose={() => setPaymentModalVisible(false)}
         resident={selectedResident}
         societySettings={societySettings}
+        onPaymentRecorded={() => {
+          fetchResidentsList();
+          fetchSocietyDetails();
+        }}
       />
     </View>
   );

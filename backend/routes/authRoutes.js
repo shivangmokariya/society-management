@@ -20,6 +20,10 @@ router.post(
   authController.registerSecretary
 );
 
+router.get('/secretary-registrations', authController.getSecretaryRegistrations);
+router.post('/approve-secretary/:id', authController.approveSecretary);
+router.post('/reject-secretary/:id', authController.rejectSecretary);
+
 router.post(
   '/login',
   [

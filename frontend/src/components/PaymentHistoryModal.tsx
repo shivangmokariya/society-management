@@ -8,7 +8,7 @@ import {
   StyleSheet,
   TextInput,
   ActivityIndicator,
-  TouchableWithoutFeedback,
+  Pressable,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
@@ -25,6 +25,7 @@ interface PaymentHistoryModalProps {
     maintenanceAmount?: number | string;
     maintenanceDueDate?: string;
   };
+  onPaymentRecorded?: () => void;
 }
 
 export const PaymentHistoryModal: React.FC<PaymentHistoryModalProps> = ({
@@ -32,6 +33,7 @@ export const PaymentHistoryModal: React.FC<PaymentHistoryModalProps> = ({
   onClose,
   resident,
   societySettings,
+  onPaymentRecorded,
 }) => {
   const [payments, setPayments] = useState<MaintenancePayment[]>([]);
   const [loading, setLoading] = useState(false);
@@ -153,11 +155,13 @@ export const PaymentHistoryModal: React.FC<PaymentHistoryModalProps> = ({
 
       setSuccessMsg(`Payment of ₹${amount} recorded as "${computedStatus === 'On Time' ? 'Done On Time' : 'Paid Late'}".`);
       setShowAddForm(false);
+      onPaymentRecorded?.();
     } catch (err: any) {
       // Fallback
       setPayments((prev) => [newPaymentRecord, ...prev]);
       setSuccessMsg(`Payment recorded! (${computedStatus === 'On Time' ? 'Done On Time' : 'Paid Late'})`);
       setShowAddForm(false);
+      onPaymentRecorded?.();
     } finally {
       setSubmitting(false);
     }
@@ -172,10 +176,9 @@ export const PaymentHistoryModal: React.FC<PaymentHistoryModalProps> = ({
       animationType="slide"
       onRequestClose={onClose}
     >
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.overlay}>
-          <TouchableWithoutFeedback>
-            <View style={styles.modalCard}>
+      <View style={styles.overlay}>
+        <Pressable style={styles.backdrop} onPress={onClose} />
+        <View style={styles.modalCard}>
               {/* Header */}
               <View style={styles.headerRow}>
                 <View style={styles.headerTitleCol}>
@@ -239,16 +242,16 @@ export const PaymentHistoryModal: React.FC<PaymentHistoryModalProps> = ({
               <View style={styles.sectionHeaderRow}>
                 <Text style={styles.sectionTitle}>Payment History</Text>
                 <TouchableOpacity
-                  style={styles.addPaymentBtn}
+                  style={[styles.addPaymentBtn, showAddForm && styles.cancelPaymentBtn]}
                   onPress={() => setShowAddForm(!showAddForm)}
                   activeOpacity={0.8}
                 >
                   <MaterialIcons
                     name={showAddForm ? 'close' : 'add-circle-outline'}
-                    size={18}
-                    color={colors.onPrimary}
+                    size={16}
+                    color={showAddForm ? colors.onSurfaceVariant : colors.onPrimary}
                   />
-                  <Text style={styles.addPaymentBtnText}>
+                  <Text style={[styles.addPaymentBtnText, showAddForm && styles.cancelPaymentBtnText]}>
                     {showAddForm ? 'Cancel' : 'Record Payment'}
                   </Text>
                 </TouchableOpacity>
@@ -399,10 +402,8 @@ export const PaymentHistoryModal: React.FC<PaymentHistoryModalProps> = ({
                   })
                 )}
               </ScrollView>
-            </View>
-          </TouchableWithoutFeedback>
         </View>
-      </TouchableWithoutFeedback>
+      </View>
     </Modal>
   );
 };
@@ -413,13 +414,19 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
   },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
   modalCard: {
     backgroundColor: colors.surface,
     borderTopLeftRadius: borderRadius.xxl,
     borderTopRightRadius: borderRadius.xxl,
     padding: 20,
     maxHeight: '88%',
-    gap: 16,
+    width: '100%',
+  },
+  scrollList: {
+    flexShrink: 1,
   },
   headerRow: {
     flexDirection: 'row',
@@ -529,6 +536,14 @@ const styles = StyleSheet.create({
     color: colors.onPrimary,
     fontWeight: '600',
   },
+  cancelPaymentBtn: {
+    backgroundColor: colors.surfaceContainerLow,
+    borderWidth: 1,
+    borderColor: colors.borderDefault,
+  },
+  cancelPaymentBtnText: {
+    color: colors.onSurfaceVariant,
+  },
   formBox: {
     backgroundColor: colors.surfaceContainerLowest,
     padding: 16,
@@ -580,9 +595,6 @@ const styles = StyleSheet.create({
     ...typography.labelMd,
     color: colors.onPrimary,
     fontWeight: '600',
-  },
-  scrollList: {
-    maxHeight: 320,
   },
   loadingContainer: {
     padding: 30,

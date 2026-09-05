@@ -7,7 +7,43 @@ class ResidentService {
     const filter = {};
 
     if (societyId) {
-      filter.society = societyId;
+      const mongoose = require('mongoose');
+      let targetSoc = null;
+      if (mongoose.Types.ObjectId.isValid(societyId)) {
+        targetSoc = await Society.findById(societyId);
+      }
+      if (!targetSoc && mongoose.Types.ObjectId.isValid(societyId)) {
+        const SecretaryRegistration = require('../models/SecretaryRegistration');
+        const reg = await SecretaryRegistration.findById(societyId);
+        if (reg) {
+          targetSoc = await Society.findOne({ name: reg.societyName });
+        }
+      }
+      if (!targetSoc) {
+        targetSoc = await Society.findOne({ name: societyId });
+      }
+
+      let societyIds = [];
+      if (targetSoc) {
+        const baseName = targetSoc.name.toLowerCase().replace(/\s+society$/i, '').trim();
+        const related = await Society.find({
+          name: { $regex: new RegExp(`^${baseName}`, 'i') }
+        });
+        societyIds = related.map((s) => s._id);
+        if (!societyIds.some((id) => id.toString() === targetSoc._id.toString())) {
+          societyIds.push(targetSoc._id);
+        }
+      } else if (mongoose.Types.ObjectId.isValid(societyId)) {
+        societyIds.push(new mongoose.Types.ObjectId(societyId));
+      }
+
+      if (societyIds.length > 0) {
+        filter.$or = [
+          { society: { $in: societyIds } },
+          { society: { $exists: false } },
+          { society: null },
+        ];
+      }
     }
 
     if (block) {
@@ -23,12 +59,19 @@ class ResidentService {
     }
 
     if (search) {
-      filter.$or = [
+      const searchOr = [
         { flat: { $regex: search, $options: 'i' } },
         { ownerName: { $regex: search, $options: 'i' } },
         { residentName: { $regex: search, $options: 'i' } },
         { phone: { $regex: search, $options: 'i' } },
       ];
+
+      if (filter.$or) {
+        filter.$and = [{ $or: filter.$or }, { $or: searchOr }];
+        delete filter.$or;
+      } else {
+        filter.$or = searchOr;
+      }
     }
 
     return await Resident.find(filter).sort({ flat: 1 });
@@ -43,12 +86,38 @@ class ResidentService {
   }
 
   async addOwner(data) {
-    const { fullName, phone, flatNumber, email, documents } = data;
+    const { fullName, phone, flatNumber, email, documents, societyId, society } = data;
+    const mongoose = require('mongoose');
 
-    // Check if flat already exists
-    const existing = await Resident.findOne({ flat: flatNumber });
+    let targetSociety = null;
+    const socInput = societyId || society;
+    if (socInput) {
+      if (mongoose.Types.ObjectId.isValid(socInput)) {
+        targetSociety = await Society.findById(socInput);
+      }
+      if (!targetSociety && mongoose.Types.ObjectId.isValid(socInput)) {
+        const SecretaryRegistration = require('../models/SecretaryRegistration');
+        const reg = await SecretaryRegistration.findById(socInput);
+        if (reg) {
+          targetSociety = await Society.findOne({ name: reg.societyName });
+        }
+      }
+      if (!targetSociety) {
+        targetSociety = await Society.findOne({ name: socInput });
+      }
+    }
+    if (!targetSociety) {
+      targetSociety = await Society.findOne();
+    }
+
+    const targetSocietyId = targetSociety ? targetSociety._id : undefined;
+
+    // Check if flat already exists for this society
+    const query = { flat: flatNumber };
+    if (targetSocietyId) query.society = targetSocietyId;
+
+    let existing = await Resident.findOne(query);
     if (existing) {
-      // Update owner info if flat exists
       existing.ownerName = fullName;
       existing.phone = phone || existing.phone;
       existing.email = email || existing.email;
@@ -59,10 +128,9 @@ class ResidentService {
 
     // Determine default block from flat name (e.g. A-302 -> Block A)
     const blockLetter = flatNumber.includes('-') ? flatNumber.split('-')[0] : 'A';
-    const defaultSociety = await Society.findOne();
 
     const resident = await Resident.create({
-      society: defaultSociety ? defaultSociety._id : undefined,
+      society: targetSocietyId,
       flat: flatNumber,
       block: `Block ${blockLetter.toUpperCase()}`,
       status: 'Occupied',
@@ -79,12 +147,37 @@ class ResidentService {
   }
 
   async addTenant(data) {
-    const { fullName, phone, flatAssignment, moveInDate, documents } = data;
+    const { fullName, phone, flatAssignment, moveInDate, documents, societyId, society } = data;
+    const mongoose = require('mongoose');
 
-    // flatAssignment format could be "A-101 (Owner: R. Kapoor)" or "A-101"
-    const flatNumber = flatAssignment.split(' ')[0];
+    let targetSociety = null;
+    const socInput = societyId || society;
+    if (socInput) {
+      if (mongoose.Types.ObjectId.isValid(socInput)) {
+        targetSociety = await Society.findById(socInput);
+      }
+      if (!targetSociety && mongoose.Types.ObjectId.isValid(socInput)) {
+        const SecretaryRegistration = require('../models/SecretaryRegistration');
+        const reg = await SecretaryRegistration.findById(socInput);
+        if (reg) {
+          targetSociety = await Society.findOne({ name: reg.societyName });
+        }
+      }
+      if (!targetSociety) {
+        targetSociety = await Society.findOne({ name: socInput });
+      }
+    }
+    if (!targetSociety) {
+      targetSociety = await Society.findOne();
+    }
 
-    let resident = await Resident.findOne({ flat: flatNumber });
+    const targetSocietyId = targetSociety ? targetSociety._id : undefined;
+    const flatNumber = flatAssignment ? flatAssignment.split(' ')[0] : 'A-101';
+
+    const query = { flat: flatNumber };
+    if (targetSocietyId) query.society = targetSocietyId;
+
+    let resident = await Resident.findOne(query);
 
     if (resident) {
       resident.residentName = fullName;
@@ -96,10 +189,9 @@ class ResidentService {
       await resident.save();
     } else {
       const blockLetter = flatNumber.includes('-') ? flatNumber.split('-')[0] : 'A';
-      const defaultSociety = await Society.findOne();
 
       resident = await Resident.create({
-        society: defaultSociety ? defaultSociety._id : undefined,
+        society: targetSocietyId,
         flat: flatNumber,
         block: `Block ${blockLetter.toUpperCase()}`,
         status: 'Occupied',

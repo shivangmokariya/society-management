@@ -15,6 +15,7 @@ import { colors } from '../../theme/colors';
 import { typography } from '../../theme/typography';
 import { borderRadius, spacing } from '../../theme/spacing';
 import { initialSocietyData } from '../../data/mockData';
+import { useFocusEffect } from '@react-navigation/native';
 import { financeService, FinanceSummaryData, TransactionItem } from '../../services/financeService';
 
 export const FinanceScreen: React.FC<{ navigation: any }> = () => {
@@ -44,9 +45,11 @@ export const FinanceScreen: React.FC<{ navigation: any }> = () => {
     }
   };
 
-  useEffect(() => {
-    fetchFinanceData();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchFinanceData();
+    }, [])
+  );
 
   return (
     <View style={styles.container}>

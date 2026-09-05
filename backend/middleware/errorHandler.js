@@ -1,7 +1,11 @@
 const ApiError = require('../utils/apiError');
+const logger = require('../utils/logger');
 
 const errorHandler = (err, req, res, next) => {
   let error = err;
+
+  // Log error details to application.log
+  logger.error(`[${req.method} ${req.originalUrl}] ${err.message || 'Error occurred'}`, err);
 
   if (!(error instanceof ApiError)) {
     const statusCode = error.statusCode || 500;

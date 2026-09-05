@@ -40,7 +40,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
 
     setLoading(true);
     try {
-      await login({ email, password });
+      await login({ email, password, rememberMe });
     } catch (err: any) {
       setErrorMsg(err.message || 'Login failed. Please check your credentials.');
     } finally {

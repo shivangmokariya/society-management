@@ -1,11 +1,11 @@
 import { Platform } from 'react-native';
 
-// Default API Base URL based on platform
 const getBaseHost = (): string => {
   if (process.env.EXPO_PUBLIC_API_URL) {
     return process.env.EXPO_PUBLIC_API_URL.replace(/\/api\/?$/, '');
   }
-  return 'https://society-management-2-chie.onrender.com';
+  // Local fallback
+  return Platform.OS === 'android' ? 'http://10.0.2.2:5000' : 'http://localhost:5000';
 };
 
 export const API_HOST = getBaseHost();

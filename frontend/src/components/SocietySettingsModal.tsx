@@ -7,7 +7,7 @@ import {
   StyleSheet,
   TextInput,
   ActivityIndicator,
-  TouchableWithoutFeedback,
+  Pressable,
   ScrollView,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -209,40 +209,45 @@ export const SocietySettingsModal: React.FC<SocietySettingsModalProps> = ({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.overlay}>
-          <TouchableWithoutFeedback>
-            <View style={styles.modalCard}>
-              {/* Header */}
-              <View style={styles.headerRow}>
-                <View style={styles.iconCircle}>
-                  <MaterialIcons name="calendar-month" size={24} color={colors.primary} />
-                </View>
-                <View style={styles.headerTextCol}>
-                  <Text style={styles.modalTitle}>Annual Maintenance Settings</Text>
-                  <Text style={styles.modalSub}>Jan - Dec Calendar • Custom date selection per month</Text>
-                </View>
-                <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-                  <MaterialIcons name="close" size={24} color={colors.onSurfaceVariant} />
-                </TouchableOpacity>
-              </View>
+      <View style={styles.overlay}>
+        <Pressable style={styles.backdrop} onPress={onClose} />
+        <View style={styles.modalCard}>
+          {/* Header */}
+          <View style={styles.headerRow}>
+            <View style={styles.iconCircle}>
+              <MaterialIcons name="calendar-month" size={24} color={colors.primary} />
+            </View>
+            <View style={styles.headerTextCol}>
+              <Text style={styles.modalTitle}>Annual Maintenance Settings</Text>
+              <Text style={styles.modalSub}>Jan - Dec Calendar • Custom date selection per month</Text>
+            </View>
+            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+              <MaterialIcons name="close" size={24} color={colors.onSurfaceVariant} />
+            </TouchableOpacity>
+          </View>
 
-              {/* Banners */}
-              {!!errorMsg && (
-                <View style={styles.errorBox}>
-                  <MaterialIcons name="error-outline" size={18} color="#b00020" />
-                  <Text style={styles.errorText}>{errorMsg}</Text>
-                </View>
-              )}
+          {/* Banners */}
+          {!!errorMsg && (
+            <View style={styles.errorBox}>
+              <MaterialIcons name="error-outline" size={18} color="#b00020" />
+              <Text style={styles.errorText}>{errorMsg}</Text>
+            </View>
+          )}
 
-              {!!successMsg && (
-                <View style={styles.successBox}>
-                  <MaterialIcons name="check-circle" size={18} color="#0e6251" />
-                  <Text style={styles.successText}>{successMsg}</Text>
-                </View>
-              )}
+          {!!successMsg && (
+            <View style={styles.successBox}>
+              <MaterialIcons name="check-circle" size={18} color="#0e6251" />
+              <Text style={styles.successText}>{successMsg}</Text>
+            </View>
+          )}
 
-              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.formContainer}>
+          <ScrollView
+            style={styles.scrollContainer}
+            showsVerticalScrollIndicator={true}
+            contentContainerStyle={styles.formContainer}
+            keyboardShouldPersistTaps="handled"
+            nestedScrollEnabled={true}
+          >
                 {/* Maintenance Amount */}
                 <View style={styles.fieldGroup}>
                   <Text style={styles.label}>Society Maintenance Amount (₹)</Text>
@@ -382,10 +387,8 @@ export const SocietySettingsModal: React.FC<SocietySettingsModalProps> = ({
                   )}
                 </TouchableOpacity>
               </ScrollView>
-            </View>
-          </TouchableWithoutFeedback>
         </View>
-      </TouchableWithoutFeedback>
+      </View>
 
       {/* Month Custom Calendar Date Picker Modal */}
       {activePickerMonth && (
@@ -395,10 +398,9 @@ export const SocietySettingsModal: React.FC<SocietySettingsModalProps> = ({
           animationType="fade"
           onRequestClose={() => setPickerModalVisible(false)}
         >
-          <TouchableWithoutFeedback onPress={() => setPickerModalVisible(false)}>
-            <View style={styles.pickerOverlay}>
-              <TouchableWithoutFeedback>
-                <View style={styles.pickerCard}>
+          <View style={styles.pickerOverlay}>
+            <Pressable style={styles.backdrop} onPress={() => setPickerModalVisible(false)} />
+            <View style={styles.pickerCard}>
                   {/* Picker Header */}
                   <View style={styles.pickerHeaderRow}>
                     <View style={styles.pickerTitleCol}>
@@ -486,12 +488,10 @@ export const SocietySettingsModal: React.FC<SocietySettingsModalProps> = ({
                     ))}
                   </View>
                 </View>
-              </TouchableWithoutFeedback>
-            </View>
-          </TouchableWithoutFeedback>
-        </Modal>
-      )}
-    </Modal>
+              </View>
+            </Modal>
+          )}
+      </Modal>
   );
 };
 
@@ -501,13 +501,19 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
   },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
   modalCard: {
     backgroundColor: colors.surface,
     borderTopLeftRadius: borderRadius.xxl,
     borderTopRightRadius: borderRadius.xxl,
     padding: 20,
     maxHeight: '90%',
-    gap: 16,
+    width: '100%',
+  },
+  scrollContainer: {
+    flexShrink: 1,
   },
   headerRow: {
     flexDirection: 'row',

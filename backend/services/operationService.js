@@ -7,8 +7,9 @@ const ApiError = require('../utils/apiError');
 
 class OperationService {
   // Complaints
-  async getComplaints({ category, status, search }) {
+  async getComplaints({ category, status, search, societyId }) {
     const filter = {};
+    if (societyId) filter.society = societyId;
     if (category) filter.category = category;
     if (status) filter.status = status;
     if (search) {
@@ -22,11 +23,12 @@ class OperationService {
   }
 
   async createComplaint(data) {
-    const { title, category, flat, reportedBy, description } = data;
+    const { title, category, flat, reportedBy, description, societyId, society } = data;
     const defaultSociety = await Society.findOne();
+    const targetSociety = societyId || society || (defaultSociety ? defaultSociety._id : undefined);
 
     return await Complaint.create({
-      society: defaultSociety ? defaultSociety._id : undefined,
+      society: targetSociety,
       title,
       category: category || 'General',
       flat: flat || 'Common Area',
@@ -50,14 +52,17 @@ class OperationService {
   }
 
   // Assets
-  async getAssets() {
-    return await Asset.find().sort({ name: 1 });
+  async getAssets(societyId) {
+    const filter = {};
+    if (societyId) filter.society = societyId;
+    return await Asset.find(filter).sort({ name: 1 });
   }
 
   async createAsset(data) {
     const defaultSociety = await Society.findOne();
+    const targetSociety = data.societyId || data.society || (defaultSociety ? defaultSociety._id : undefined);
     return await Asset.create({
-      society: defaultSociety ? defaultSociety._id : undefined,
+      society: targetSociety,
       ...data,
     });
   }
@@ -71,14 +76,29 @@ class OperationService {
   }
 
   // Water Tanks
-  async getWaterTanks() {
-    const tanks = await WaterTank.find();
-    const society = await Society.findOne();
+  async getWaterTanks(societyId) {
+    const filter = {};
+    if (societyId) filter.society = societyId;
+    const tanks = await WaterTank.find(filter);
+    let society = null;
+    if (societyId) {
+      society = await Society.findById(societyId);
+    }
+    if (!society) {
+      society = await Society.findOne();
+    }
+
     return {
       tanks,
       waterLastCleaned: society ? society.waterLastCleaned : '12 Aug',
       waterNextDue: society ? society.waterNextDue : '15 Sep',
     };
+  }
+
+  async getWaterTankers(societyId) {
+    const filter = {};
+    if (societyId) filter.society = societyId;
+    return await WaterTanker.find(filter).sort({ createdAt: -1 });
   }
 
   async updateWaterTank(id, data) {
@@ -90,20 +110,20 @@ class OperationService {
   }
 
   async recordTanker(data) {
-    const { arrivalDate, capacity, supplier, notes } = data;
+    const { arrivalDate, capacity, supplier, notes, societyId, society } = data;
     const defaultSociety = await Society.findOne();
+    const targetSocietyId = societyId || society || (defaultSociety ? defaultSociety._id : undefined);
 
     const log = await WaterTanker.create({
-      society: defaultSociety ? defaultSociety._id : undefined,
+      society: targetSocietyId,
       arrivalDate: arrivalDate || new Date().toISOString().split('T')[0],
       capacity: capacity || '10,000 Liters',
       supplier: supplier || 'Express Water Tankers',
       notes: notes || '',
     });
 
-    if (defaultSociety && arrivalDate) {
-      defaultSociety.waterLastCleaned = arrivalDate;
-      await defaultSociety.save();
+    if (targetSocietyId && arrivalDate) {
+      await Society.findByIdAndUpdate(targetSocietyId, { waterLastCleaned: arrivalDate });
     }
 
     return log;

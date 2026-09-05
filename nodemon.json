@@ -1,0 +1,14 @@
+{
+  "ignore": [
+    "*.log",
+    "application.log",
+    "backend/application.log",
+    "node_modules",
+    "admin-frontend",
+    "frontend"
+  ],
+  "watch": [
+    "backend"
+  ],
+  "ext": "js,json"
+}

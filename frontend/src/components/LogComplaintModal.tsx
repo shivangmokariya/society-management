@@ -7,7 +7,7 @@ import {
   StyleSheet,
   TextInput,
   ActivityIndicator,
-  TouchableWithoutFeedback,
+  Pressable,
   ScrollView,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -135,10 +135,9 @@ export const LogComplaintModal: React.FC<LogComplaintModalProps> = ({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.overlay}>
-          <TouchableWithoutFeedback>
-            <View style={styles.modalCard}>
+      <View style={styles.overlay}>
+        <Pressable style={styles.backdrop} onPress={onClose} />
+        <View style={styles.modalCard}>
               {/* Header */}
               <View style={styles.headerRow}>
                 <View style={styles.iconCircle}>
@@ -167,7 +166,12 @@ export const LogComplaintModal: React.FC<LogComplaintModalProps> = ({
                 </View>
               )}
 
-              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.formContainer}>
+              <ScrollView
+                style={styles.scrollContainer}
+                showsVerticalScrollIndicator={true}
+                contentContainerStyle={styles.formContainer}
+                keyboardShouldPersistTaps="handled"
+              >
                 {/* Title */}
                 <View style={styles.fieldGroup}>
                   <Text style={styles.label}>Complaint Title</Text>
@@ -262,10 +266,8 @@ export const LogComplaintModal: React.FC<LogComplaintModalProps> = ({
                   )}
                 </TouchableOpacity>
               </ScrollView>
-            </View>
-          </TouchableWithoutFeedback>
         </View>
-      </TouchableWithoutFeedback>
+      </View>
     </Modal>
   );
 };
@@ -276,13 +278,19 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
   },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
   modalCard: {
     backgroundColor: colors.surface,
     borderTopLeftRadius: borderRadius.xxl,
     borderTopRightRadius: borderRadius.xxl,
     padding: 20,
     maxHeight: '90%',
-    gap: 16,
+    width: '100%',
+  },
+  scrollContainer: {
+    flexShrink: 1,
   },
   headerRow: {
     flexDirection: 'row',

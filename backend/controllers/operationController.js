@@ -4,8 +4,9 @@ const asyncHandler = require('../utils/asyncHandler');
 
 // Complaints
 exports.getComplaints = asyncHandler(async (req, res) => {
-  const { category, status, search } = req.query;
-  const complaints = await operationService.getComplaints({ category, status, search });
+  const { category, status, search, societyId } = req.query;
+  const targetSociety = societyId || (req.user && req.user.societyId);
+  const complaints = await operationService.getComplaints({ category, status, search, societyId: targetSociety });
   return ApiResponse.success(res, 'Complaints list fetched successfully', complaints);
 });
 
@@ -22,7 +23,8 @@ exports.updateComplaintStatus = asyncHandler(async (req, res) => {
 
 // Assets
 exports.getAssets = asyncHandler(async (req, res) => {
-  const assets = await operationService.getAssets();
+  const { societyId } = req.query;
+  const assets = await operationService.getAssets(societyId);
   return ApiResponse.success(res, 'Assets list fetched successfully', assets);
 });
 
@@ -38,8 +40,15 @@ exports.updateAsset = asyncHandler(async (req, res) => {
 
 // Water Tanks
 exports.getWaterTanks = asyncHandler(async (req, res) => {
-  const data = await operationService.getWaterTanks();
+  const { societyId } = req.query;
+  const data = await operationService.getWaterTanks(societyId);
   return ApiResponse.success(res, 'Water tank metrics fetched successfully', data);
+});
+
+exports.getWaterTankers = asyncHandler(async (req, res) => {
+  const { societyId } = req.query;
+  const tankers = await operationService.getWaterTankers(societyId);
+  return ApiResponse.success(res, 'Water tanker log fetched successfully', tankers);
 });
 
 exports.updateWaterTank = asyncHandler(async (req, res) => {
