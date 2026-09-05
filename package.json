@@ -6,7 +6,7 @@
   "scripts": {
     "build": "echo 'Build complete'",
     "start": "node backend/server.js",
-    "dev": "nodemon --ignore *.log --ignore application.log --ignore backend/*.log backend/server.js",
+    "dev": "node --ignore *.log --ignore application.log --ignore backend/*.log backend/server.js",
     "admin": "npm --prefix admin-frontend run dev"
   },
   "dependencies": {
