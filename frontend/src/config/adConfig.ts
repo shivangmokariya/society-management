@@ -11,8 +11,8 @@ import { Platform } from 'react-native';
  * 5. Replace `PRODUCTION_BANNER_ID_ANDROID` and `PRODUCTION_BANNER_ID_IOS` below with your real Banner Ad Unit IDs.
  */
 
-// Toggle test ads (always true in __DEV__, toggle to false for real ads in production builds)
-export const USE_TEST_ADS = true;
+// Toggle test ads (false for production builds; set to true if testing with Google test IDs)
+export const USE_TEST_ADS = false;
 
 // Google Official Test IDs
 export const TEST_APP_ID_ANDROID = 'ca-app-pub-3940256099942544~3347511713';
