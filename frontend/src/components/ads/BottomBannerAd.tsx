@@ -26,7 +26,7 @@ export const BottomBannerAd: React.FC<BottomBannerAdProps> = ({
 
   const adUnitId = adUnitIdOverride || getBannerAdUnitId();
   const banner = renderBannerAd(adUnitId, (error: any) => {
-    console.warn('[BottomBannerAd] Banner ad failed to load gracefully:', error);
+    console.warn('[BottomBannerAd] Banner ad failed to load gracefully. Code:', error?.code, 'Message:', error?.message);
     setAdFailed(true);
   });
 
