@@ -29,7 +29,9 @@ export const PRODUCTION_BANNER_ID_IOS = 'ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX'
  * Returns the appropriate Banner Ad Unit ID based on environment, OS, and test settings.
  */
 export const getBannerAdUnitId = (): string => {
-  if (__DEV__ || USE_TEST_ADS) {
+  // NOTE: Do NOT use __DEV__ here — in EAS APK/production builds __DEV__ may still
+  // be true depending on the build profile. Only USE_TEST_ADS should control test mode.
+  if (USE_TEST_ADS) {
     return TEST_BANNER_ID;
   }
 
