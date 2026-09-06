@@ -16,7 +16,6 @@ import { LogComplaintModal } from '../../components/LogComplaintModal';
 import { colors } from '../../theme/colors';
 import { typography } from '../../theme/typography';
 import { borderRadius, spacing } from '../../theme/spacing';
-import { initialSocietyData } from '../../data/mockData';
 import { operationService, ComplaintItem, AssetItem, WaterTankItem } from '../../services/operationService';
 
 export const OperationsScreen: React.FC<{ navigation: any }> = () => {
@@ -107,27 +106,31 @@ export const OperationsScreen: React.FC<{ navigation: any }> = () => {
           <View style={styles.bentoGrid}>
             <TouchableOpacity
               style={styles.bentoPrimaryBtn}
-              activeOpacity={0.8}
+              activeOpacity={0.85}
               onPress={() => setLogComplaintModalVisible(true)}
             >
-              <MaterialIcons name="report-problem" size={24} color={colors.onPrimary} />
-              <Text style={styles.bentoPrimaryText}>Log Complaint</Text>
+              <View style={styles.bentoIconBadge}>
+                <MaterialIcons name="assignment-late" size={26} color={colors.onPrimary} />
+              </View>
+              <View style={styles.bentoTextWrap}>
+                <Text style={styles.bentoPrimaryText}>Log Complaint</Text>
+                <Text style={styles.bentoSubText}>Report issue & track resolution</Text>
+              </View>
             </TouchableOpacity>
 
-            <View style={styles.bentoCol}>
-              <TouchableOpacity
-                style={styles.bentoSecondaryBtn}
-                activeOpacity={0.8}
-                onPress={() => setTankerModalVisible(true)}
-              >
-                <MaterialIcons name="local-shipping" size={20} color={colors.tertiary} />
+            <TouchableOpacity
+              style={styles.bentoSecondaryBtn}
+              activeOpacity={0.85}
+              onPress={() => setTankerModalVisible(true)}
+            >
+              <View style={styles.bentoSecondaryIconBadge}>
+                <MaterialIcons name="local-shipping" size={24} color={colors.tertiary} />
+              </View>
+              <View style={styles.bentoTextWrap}>
                 <Text style={styles.bentoSecondaryText}>Record Tanker</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.bentoSecondaryBtn} activeOpacity={0.8}>
-                <MaterialIcons name="assignment-ind" size={20} color={colors.secondary} />
-                <Text style={styles.bentoSecondaryText}>Staff Attendance</Text>
-              </TouchableOpacity>
-            </View>
+                <Text style={styles.bentoSecondarySubText}>Log water delivery</Text>
+              </View>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -231,7 +234,7 @@ export const OperationsScreen: React.FC<{ navigation: any }> = () => {
 
         {/* Asset Health */}
         {assets.length > 0 && (
-          <View style={styles.sectionGap}>
+          <View style={[styles.sectionGap, { marginBottom: 32 }]}>
             <Text style={styles.sectionTitle}>Asset Health</Text>
 
             <View style={styles.assetList}>
@@ -277,27 +280,6 @@ export const OperationsScreen: React.FC<{ navigation: any }> = () => {
             </View>
           </View>
         )}
-
-        {/* Staff Attendance Summary */}
-        <View style={[styles.sectionGap, { marginBottom: 32 }]}>
-          <View style={styles.staffCard}>
-            <View style={styles.staffLeft}>
-              <Text style={styles.staffLabel}>Staff Today</Text>
-              <View style={styles.staffCountRow}>
-                <Text style={styles.staffPresentNum}>
-                  {initialSocietyData.staffAttendance.presentCount}
-                </Text>
-                <Text style={styles.staffTotalSub}>
-                  / {initialSocietyData.staffAttendance.totalCount} Present
-                </Text>
-              </View>
-            </View>
-
-            <TouchableOpacity style={styles.staffArrowBtn} activeOpacity={0.8}>
-              <MaterialIcons name="arrow-forward" size={20} color={colors.secondaryContainer} />
-            </TouchableOpacity>
-          </View>
-        </View>
       </ScrollView>
 
       {/* Dynamic Modals */}
@@ -355,7 +337,7 @@ const styles = StyleSheet.create({
   },
   bentoGrid: {
     flexDirection: 'row',
-    gap: 16,
+    gap: 12,
   },
   bentoPrimaryBtn: {
     flex: 1,
@@ -363,35 +345,68 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     padding: 16,
     justifyContent: 'space-between',
-    minHeight: 120,
+    minHeight: 130,
     shadowColor: 'rgba(51, 58, 61, 0.04)',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 1,
+  },
+  bentoIconBadge: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bentoTextWrap: {
+    marginTop: 12,
   },
   bentoPrimaryText: {
     ...typography.labelMd,
+    fontWeight: '700',
+    fontSize: 15,
     color: colors.onPrimary,
   },
-  bentoCol: {
-    flex: 1,
-    gap: 16,
+  bentoSubText: {
+    ...typography.labelSm,
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginTop: 2,
   },
   bentoSecondaryBtn: {
+    flex: 1,
     backgroundColor: colors.surfaceContainer,
     borderRadius: borderRadius.lg,
-    padding: 12,
-    gap: 8,
+    padding: 16,
+    justifyContent: 'space-between',
+    minHeight: 130,
     shadowColor: 'rgba(51, 58, 61, 0.04)',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 1,
   },
+  bentoSecondaryIconBadge: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: 'rgba(49, 102, 107, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   bentoSecondaryText: {
     ...typography.labelMd,
+    fontWeight: '700',
+    fontSize: 15,
     color: colors.onSurface,
+  },
+  bentoSecondarySubText: {
+    ...typography.labelSm,
+    fontSize: 11,
+    color: colors.onSurfaceVariant,
+    marginTop: 2,
   },
   sectionHeader: {
     flexDirection: 'row',
