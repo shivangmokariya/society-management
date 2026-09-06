@@ -21,9 +21,7 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
   label = "Tap to upload documents",
   subLabel = "Supports PDF, JPG, PNG up to 5MB",
 }) => {
-  const [files, setFiles] = useState<UploadedFile[]>([
-    { id: '1', name: 'Sale_Deed_A302.pdf', sizeMB: '1.42', type: 'pdf' },
-  ]);
+  const [files, setFiles] = useState<UploadedFile[]>([]);
 
   const handleAddMockFile = () => {
     const mockFiles: UploadedFile[] = [

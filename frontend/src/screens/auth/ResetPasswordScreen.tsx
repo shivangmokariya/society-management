@@ -72,15 +72,7 @@ export const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({ naviga
         setErrorMsg(res.message || 'Failed to reset password. The link may have expired.');
       }
     } catch (err: any) {
-      // Demo fallback if token was demo generated
-      if (token.startsWith('demo-reset-token-')) {
-        setSuccessMsg('Password updated successfully! Redirecting to sign in...');
-        setTimeout(() => {
-          navigation.navigate('Login');
-        }, 1500);
-      } else {
-        setErrorMsg(err.message || 'Failed to reset password. The token may be invalid or expired.');
-      }
+      setErrorMsg(err.message || 'Failed to reset password. The token may be invalid or expired.');
     } finally {
       setLoading(false);
     }
@@ -135,7 +127,7 @@ export const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({ naviga
           <View style={styles.tokenAuthBadge}>
             <MaterialIcons name="verified-user" size={16} color="#0e6251" />
             <Text style={styles.tokenAuthBadgeText}>
-              Authenticated via Email Reset Token ({token.substring(0, 12)}...)
+              OTP Verified ({route?.params?.email || 'Identity Confirmed'})
             </Text>
           </View>
 
@@ -150,7 +142,7 @@ export const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({ naviga
             </View>
             <Text style={styles.title}>Create New Password</Text>
             <Text style={styles.subtitle}>
-              Your identity has been verified by token. Enter your new password below.
+              Your OTP code has been verified. Enter your new password twice to complete reset.
             </Text>
           </View>
 

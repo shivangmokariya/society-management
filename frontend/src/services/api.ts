@@ -26,6 +26,7 @@ export interface ApiResponse<T = any> {
   success: boolean;
   message: string;
   data?: T;
+  retryAfterSeconds?: number;
   errors?: any[];
 }
 
@@ -49,12 +50,16 @@ export async function request<T = any>(
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.message || 'API request failed');
+      const err: any = new Error(data.message || 'API request failed');
+      if (data.retryAfterSeconds) {
+        err.retryAfterSeconds = data.retryAfterSeconds;
+      }
+      throw err;
     }
 
     return data;
   } catch (error: any) {
     console.error(`API Error [${endpoint}]:`, error);
-    throw new Error(error.message || 'Network error or server offline');
+    throw error;
   }
 }

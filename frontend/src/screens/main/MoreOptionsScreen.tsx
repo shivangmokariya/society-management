@@ -12,8 +12,8 @@ import { colors } from '../../theme/colors';
 import { typography } from '../../theme/typography';
 import { borderRadius, spacing } from '../../theme/spacing';
 import { useAuth } from '../../context/AuthContext';
+import { societyService } from '../../services/societyService';
 import { SocietySettingsModal } from '../../components/SocietySettingsModal';
-import { initialSocietyData } from '../../data/mockData';
 
 interface MoreOptionsScreenProps {
   navigation: any;
@@ -27,10 +27,26 @@ export const MoreOptionsScreen: React.FC<MoreOptionsScreenProps> = ({ navigation
     maintenanceDueDate: string;
     monthSchedule?: { [key: number]: number };
   }>({
-    maintenanceAmount: initialSocietyData.maintenanceAmount,
-    maintenanceDueDate: initialSocietyData.maintenanceDueDate,
-    monthSchedule: initialSocietyData.monthSchedule,
+    maintenanceAmount: 2500,
+    maintenanceDueDate: '5th of every month',
   });
+
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const res = await societyService.getSocietyDetails();
+        if (res.success && res.data) {
+          setSocietySettings({
+            maintenanceAmount: res.data.maintenanceAmount || 2500,
+            maintenanceDueDate: res.data.maintenanceDueDate || '5th of every month',
+            monthSchedule: res.data.monthSchedule,
+          });
+        }
+      } catch (err) {
+        console.warn('Error fetching society details:', err);
+      }
+    })();
+  }, []);
 
   const menuItems = [
     {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 // Trigger Metro bundle refresh
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -12,8 +12,13 @@ import {
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { colors } from './src/theme/colors';
+import { initAdMob } from './src/config/adConfig';
 
 export default function App() {
+  useEffect(() => {
+    initAdMob();
+  }, []);
+
   const [fontsLoaded] = useFonts({
     'PlusJakartaSans-Regular': PlusJakartaSans_400Regular,
     'PlusJakartaSans-Medium': PlusJakartaSans_500Medium,

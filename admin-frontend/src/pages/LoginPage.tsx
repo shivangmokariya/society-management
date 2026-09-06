@@ -7,8 +7,8 @@ export const LoginPage: React.FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState('shivangmokariya.dev@gmail.com');
-  const [password, setPassword] = useState('Admin@gmail.com');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -50,14 +50,6 @@ export const LoginPage: React.FC = () => {
           </div>
           <h2 style={styles.title}>Admin Portal</h2>
           <p style={styles.subtitle}>Sign in to manage society access and system operations.</p>
-        </div>
-
-        {/* Admin Credentials Hint Pill */}
-        <div style={styles.hintBanner}>
-          <ShieldCheck size={18} color="var(--primary)" />
-          <div style={styles.hintText}>
-            Default Admin: <strong>shivangmokariya.dev@gmail.com</strong>
-          </div>
         </div>
 
         {/* Error Alert */}

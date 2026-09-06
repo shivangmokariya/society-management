@@ -130,7 +130,7 @@ export const ProfilePage: React.FC = () => {
                     type="email"
                     className="form-input"
                     style={{ paddingLeft: '2.5rem', backgroundColor: 'var(--bg-surface)' }}
-                    value={user?.email || 'shivangmokariya.dev@gmail.com'}
+                    value={user?.email || ''}
                     disabled
                   />
                 </div>

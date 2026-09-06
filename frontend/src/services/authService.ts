@@ -78,15 +78,25 @@ export const authService = {
     });
   },
 
-  // Request password reset link
-  forgotPassword: async (email: string): Promise<ApiResponse<{ resetToken?: string; email?: string }>> => {
-    return await request<{ resetToken?: string; email?: string }>('/auth/forgot-password', {
+  // Request password reset OTP
+  forgotPassword: async (
+    email: string
+  ): Promise<ApiResponse<{ otp?: string; email?: string; cooldownSeconds?: number }>> => {
+    return await request<{ otp?: string; email?: string; cooldownSeconds?: number }>('/auth/forgot-password', {
       method: 'POST',
       body: JSON.stringify({ email }),
     });
   },
 
-  // Reset password using email reset token
+  // Verify 6-digit OTP code
+  verifyOtp: async (email: string, otp: string): Promise<ApiResponse<{ resetToken?: string; email?: string }>> => {
+    return await request<{ resetToken?: string; email?: string }>('/auth/verify-otp', {
+      method: 'POST',
+      body: JSON.stringify({ email, otp }),
+    });
+  },
+
+  // Reset password using verified reset token
   resetPassword: async (token: string, newPassword: string): Promise<ApiResponse<any>> => {
     return await request<any>(`/auth/reset-password/${token}`, {
       method: 'POST',

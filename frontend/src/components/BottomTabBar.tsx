@@ -4,6 +4,8 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
+import { BottomBannerAd } from './ads/BottomBannerAd';
+import { AD_DISABLED_SCREENS } from '../config/adConfig';
 
 const tabIconMap: Record<string, keyof typeof MaterialIcons.glyphMap> = {
   Dashboard: 'dashboard',
@@ -22,8 +24,12 @@ const tabLabelMap: Record<string, string> = {
 };
 
 export const BottomTabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigation }) => {
+  const currentRoute = state.routes[state.index];
+  const isAdEnabled = !AD_DISABLED_SCREENS.includes(currentRoute?.name || '');
+
   return (
     <View style={styles.container}>
+      <BottomBannerAd enabled={isAdEnabled} />
       <View style={styles.barContent}>
         {state.routes.map((route, index) => {
           const isFocused = state.index === index;

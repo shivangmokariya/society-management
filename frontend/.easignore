@@ -3,7 +3,7 @@ node_modules/
 dist/
 android/
 ios/
-.git/index.lock
+*.log
 .gradle/
 android/.gradle/
 android/build/

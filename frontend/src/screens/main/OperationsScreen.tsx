@@ -20,14 +20,14 @@ import { initialSocietyData } from '../../data/mockData';
 import { operationService, ComplaintItem, AssetItem, WaterTankItem } from '../../services/operationService';
 
 export const OperationsScreen: React.FC<{ navigation: any }> = () => {
-  const [complaints, setComplaints] = useState<ComplaintItem[]>(initialSocietyData.complaints as any);
-  const [assets, setAssets] = useState<AssetItem[]>(initialSocietyData.assets as any);
-  const [tanks, setTanks] = useState<WaterTankItem[]>(initialSocietyData.waterTanks as any);
+  const [complaints, setComplaints] = useState<ComplaintItem[]>([]);
+  const [assets, setAssets] = useState<AssetItem[]>([]);
+  const [tanks, setTanks] = useState<WaterTankItem[]>([]);
 
   // Dynamic Modals State
   const [tankerModalVisible, setTankerModalVisible] = useState(false);
   const [logComplaintModalVisible, setLogComplaintModalVisible] = useState(false);
-  const [waterLastCleaned, setWaterLastCleaned] = useState(initialSocietyData.waterLastCleaned);
+  const [waterLastCleaned, setWaterLastCleaned] = useState('');
   const [expandedComplaintId, setExpandedComplaintId] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(true);
@@ -41,13 +41,13 @@ export const OperationsScreen: React.FC<{ navigation: any }> = () => {
         operationService.getWaterTanks(),
       ]);
 
-      if (compRes.success && compRes.data && compRes.data.length > 0) {
+      if (compRes.success && compRes.data) {
         setComplaints(compRes.data);
       }
-      if (assetRes.success && assetRes.data && assetRes.data.length > 0) {
+      if (assetRes.success && assetRes.data) {
         setAssets(assetRes.data);
       }
-      if (tankRes.success && tankRes.data?.tanks && tankRes.data.tanks.length > 0) {
+      if (tankRes.success && tankRes.data?.tanks) {
         setTanks(tankRes.data.tanks);
         if (tankRes.data.waterLastCleaned) {
           setWaterLastCleaned(tankRes.data.waterLastCleaned);
@@ -72,6 +72,18 @@ export const OperationsScreen: React.FC<{ navigation: any }> = () => {
   const handleRecordTankerSuccess = (arrivalDate: string) => {
     setWaterLastCleaned(arrivalDate);
   };
+
+  if (loading && complaints.length === 0 && assets.length === 0) {
+    return (
+      <View style={styles.container}>
+        <Header title="Operations" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>Loading Operations Hub...</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -132,7 +144,7 @@ export const OperationsScreen: React.FC<{ navigation: any }> = () => {
           </View>
 
           <View style={styles.complaintList}>
-            {(complaints.length > 0 ? complaints : initialSocietyData.complaints).map((c: any, index: number) => {
+            {complaints.map((c: any, index: number) => {
               const compId = c._id || c.id || `comp-${index}`;
               const isExpanded = expandedComplaintId === compId;
 
@@ -194,73 +206,77 @@ export const OperationsScreen: React.FC<{ navigation: any }> = () => {
         </View>
 
         {/* Water Management */}
-        <View style={styles.sectionGap}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Water Management</Text>
-            <TouchableOpacity onPress={() => setTankerModalVisible(true)} style={styles.tankerShortcutBtn}>
-              <MaterialIcons name="local-shipping" size={16} color={colors.tertiary} />
-              <Text style={styles.tankerShortcutText}>Record Tanker</Text>
-            </TouchableOpacity>
-          </View>
+        {tanks.length > 0 && (
+          <View style={styles.sectionGap}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Water Management</Text>
+              <TouchableOpacity onPress={() => setTankerModalVisible(true)} style={styles.tankerShortcutBtn}>
+                <MaterialIcons name="local-shipping" size={16} color={colors.tertiary} />
+                <Text style={styles.tankerShortcutText}>Record Tanker</Text>
+              </TouchableOpacity>
+            </View>
 
-          <WaterTankVisual
-            tanks={(tanks.length > 0 ? tanks : initialSocietyData.waterTanks).map((t: any, idx: number) => ({
-              id: t._id || t.id || `tank-${idx}`,
-              name: t.name,
-              levelPercent: t.levelPercent,
-              color: t.color,
-            }))}
-            lastCleaned={waterLastCleaned}
-            nextDue={initialSocietyData.waterNextDue}
-          />
-        </View>
+            <WaterTankVisual
+              tanks={tanks.map((t: any, idx: number) => ({
+                id: t._id || t.id || `tank-${idx}`,
+                name: t.name,
+                levelPercent: t.levelPercent,
+                color: t.color,
+              }))}
+              lastCleaned={waterLastCleaned || 'N/A'}
+              nextDue="15th of next month"
+            />
+          </View>
+        )}
 
         {/* Asset Health */}
-        <View style={styles.sectionGap}>
-          <Text style={styles.sectionTitle}>Asset Health</Text>
+        {assets.length > 0 && (
+          <View style={styles.sectionGap}>
+            <Text style={styles.sectionTitle}>Asset Health</Text>
 
-          <View style={styles.assetList}>
-            {(assets.length > 0 ? assets : initialSocietyData.assets).map((ast: any, index: number) => (
-              <View
-                key={ast._id || ast.id || index}
-                style={[
-                  styles.assetCard,
-                  ast.status === 'Service Due' && styles.assetServiceDue,
-                ]}
-              >
-                <View style={styles.assetLeft}>
-                  <View
-                    style={[
-                      styles.assetIconBg,
-                      {
-                        backgroundColor:
-                          ast.status === 'Service Due'
-                            ? 'rgba(255, 218, 214, 0.3)'
-                            : 'rgba(125, 166, 142, 0.2)',
-                      },
-                    ]}
-                  >
-                    <MaterialIcons
-                      name={(ast.icon as any) || 'devices'}
-                      size={20}
-                      color={ast.status === 'Service Due' ? colors.error : colors.primary}
-                    />
+            <View style={styles.assetList}>
+              {assets.map((ast: any, index: number) => (
+                <View
+                  key={ast._id || ast.id || index}
+                  style={[
+                    styles.assetCard,
+                    ast.status === 'Service Due' && styles.assetServiceDue,
+                  ]}
+                >
+                  <View style={styles.assetLeft}>
+                    <View
+                      style={[
+                        styles.assetIconBg,
+                        {
+                          backgroundColor:
+                            ast.status === 'Service Due'
+                              ? 'rgba(255, 218, 214, 0.3)'
+                              : 'rgba(125, 166, 142, 0.2)',
+                        },
+                      ]}
+                    >
+                      <MaterialIcons
+                        name={(ast.icon as any) || 'devices'}
+                        size={20}
+                        color={ast.status === 'Service Due' ? colors.error : colors.primary}
+                      />
+                    </View>
+                    <Text style={styles.assetName}>{ast.name}</Text>
                   </View>
-                  <Text style={styles.assetName}>{ast.name}</Text>
+
+                  {ast.status === 'Active' ? (
+                    <View style={styles.activeTag}>
+                      <View style={styles.activeDot} />
+                      <Text style={styles.activeTagText}>Active</Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.serviceDueText}>Service Due</Text>
+                  )}
                 </View>
-
-                {ast.status === 'Active' ? (
-                  <View style={styles.activeTag}>
-                    <View style={styles.activeDot} />
-                    <Text style={styles.activeTagText}>Active</Text>
-                  </View>
-                ) : (
-                  <Text style={styles.serviceDueText}>Service Due</Text>
-                )}
-              </View>
-            ))}
+              ))}
+            </View>
           </View>
-        </View>
+        )}
 
         {/* Staff Attendance Summary */}
         <View style={[styles.sectionGap, { marginBottom: 32 }]}>
@@ -304,6 +320,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.surface,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+    gap: 12,
+  },
+  loadingText: {
+    ...typography.bodyMd,
+    color: colors.onSurfaceVariant,
   },
   scrollContent: {
     paddingBottom: 100,

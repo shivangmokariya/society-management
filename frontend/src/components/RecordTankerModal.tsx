@@ -28,8 +28,8 @@ export const RecordTankerModal: React.FC<RecordTankerModalProps> = ({
   onSuccess,
 }) => {
   const [arrivalDate, setArrivalDate] = useState('');
-  const [capacity, setCapacity] = useState('10,000 Liters');
-  const [supplier, setSupplier] = useState('Express Water Tankers');
+  const [capacity, setCapacity] = useState('');
+  const [supplier, setSupplier] = useState('');
   const [notes, setNotes] = useState('');
 
   const [loading, setLoading] = useState(false);
@@ -44,8 +44,8 @@ export const RecordTankerModal: React.FC<RecordTankerModalProps> = ({
         year: 'numeric',
       });
       setArrivalDate(todayStr);
-      setCapacity('10,000 Liters');
-      setSupplier('Express Water Tankers');
+      setCapacity('');
+      setSupplier('');
       setNotes('');
       setErrorMsg('');
       setSuccessMsg('');

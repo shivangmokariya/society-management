@@ -85,7 +85,7 @@ export const SecretaryDetailDashboardPage: React.FC = () => {
   const [waterTankers, setWaterTankers] = useState<WaterTanker[]>([]);
   const [showTankerModal, setShowTankerModal] = useState(false);
   const [tankerSupplier, setTankerSupplier] = useState('');
-  const [tankerCapacity, setTankerCapacity] = useState('10,000 Litres');
+  const [tankerCapacity, setTankerCapacity] = useState('');
   const [tankerDate, setTankerDate] = useState(new Date().toISOString().split('T')[0]);
   const [tankerNotes, setTankerNotes] = useState('');
 

@@ -50,8 +50,24 @@ export const DashboardScreen: React.FC<{ navigation: any }> = ({ navigation }) =
 
   const stats = dashboardData?.dashboardStats;
   const society = dashboardData?.society;
-  const secretaryName = user?.fullName || society?.secretaryName || initialSocietyData.secretaryName;
-  const societyName = society?.name || initialSocietyData.name;
+  const secretaryName = user?.fullName || society?.secretaryName || 'Secretary';
+  const societyName = society?.name || user?.society?.name || 'Society';
+
+  if (loading && !dashboardData) {
+    return (
+      <View style={styles.container}>
+        <Header title="Dashboard" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>Loading Dashboard...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  const attentionItems = dashboardData?.attentionItems || [];
+  const recentActivities = dashboardData?.recentActivities || [];
+  const upcomingEvents = dashboardData?.upcomingEvents || [];
 
   return (
     <View style={styles.container}>
@@ -82,28 +98,28 @@ export const DashboardScreen: React.FC<{ navigation: any }> = ({ navigation }) =
           <View style={styles.statGrid}>
             <StatCard
               label="Current Balance"
-              value={stats?.currentBalance || initialSocietyData.currentBalance}
+              value={stats?.currentBalance || '₹0'}
               accentColor="rgba(125, 166, 142, 0.2)"
               textColor={colors.onSurface}
               onPress={() => setSelectedStatType('balance')}
             />
             <StatCard
               label="Income (This Month)"
-              value={stats?.monthlyIncome || initialSocietyData.monthlyIncome}
+              value={stats?.monthlyIncome || '₹0'}
               accentColor="rgba(182, 236, 241, 0.2)"
               textColor={colors.secondary}
               onPress={() => setSelectedStatType('income')}
             />
             <StatCard
               label="Expenses"
-              value={stats?.monthlyExpenses || initialSocietyData.monthlyExpenses}
+              value={stats?.monthlyExpenses || '₹0'}
               accentColor="rgba(255, 218, 214, 0.3)"
               textColor={colors.error}
               onPress={() => setSelectedStatType('expenses')}
             />
             <StatCard
               label="Pending Dues"
-              value={`${stats?.pendingDuesFlats ?? initialSocietyData.pendingDuesFlats} Flats`}
+              value={`${stats?.pendingDuesFlats ?? 0} Flats`}
               accentColor="rgba(135, 159, 191, 0.2)"
               textColor={colors.tertiary}
               onPress={() => setSelectedStatType('dues')}
@@ -114,158 +130,160 @@ export const DashboardScreen: React.FC<{ navigation: any }> = ({ navigation }) =
         {/* Financial Progress Radial Chart */}
         <View style={styles.sectionGap}>
           <FinancialProgressChart
-            percentage={stats?.financialProgressPercent ?? initialSocietyData.financialProgressPercent}
-            targetText={`${stats?.monthlyIncome || initialSocietyData.monthlyIncome} of ${
-              stats?.monthlyIncomeTarget || initialSocietyData.monthlyIncomeTarget
-            } target`}
+            percentage={stats?.financialProgressPercent ?? 0}
+            targetText={`${stats?.monthlyIncome || '₹0'} of ${stats?.monthlyIncomeTarget || '₹0'} target`}
           />
         </View>
 
         {/* Attention Required */}
-        <View style={styles.sectionGap}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Attention Required</Text>
-            <View style={styles.badgeCount}>
-              <Text style={styles.badgeCountText}>
-                {(dashboardData?.attentionItems || initialSocietyData.attentionItems).length} Tasks
-              </Text>
+        {attentionItems.length > 0 && (
+          <View style={styles.sectionGap}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Attention Required</Text>
+              <View style={styles.badgeCount}>
+                <Text style={styles.badgeCountText}>{attentionItems.length} Tasks</Text>
+              </View>
             </View>
-          </View>
 
-          <View style={styles.attentionList}>
-            {(dashboardData?.attentionItems || initialSocietyData.attentionItems).map((item: any, idx: number) => (
-              <View
-                key={item._id || item.id || idx}
-                style={[
-                  styles.attentionCard,
-                  {
-                    borderLeftColor:
+            <View style={styles.attentionList}>
+              {attentionItems.map((item: any, idx: number) => (
+                <View
+                  key={item._id || item.id || idx}
+                  style={[
+                    styles.attentionCard,
+                    {
+                      borderLeftColor:
+                        item.type === 'error'
+                          ? colors.error
+                          : item.type === 'tertiary'
+                          ? colors.tertiary
+                          : colors.secondary,
+                    },
+                  ]}
+                >
+                  <MaterialIcons
+                    name={(item.icon as any) || 'info'}
+                    size={20}
+                    color={
                       item.type === 'error'
                         ? colors.error
                         : item.type === 'tertiary'
                         ? colors.tertiary
-                        : colors.secondary,
-                  },
-                ]}
-              >
-                <MaterialIcons
-                  name={(item.icon as any) || 'info'}
-                  size={20}
-                  color={
-                    item.type === 'error'
-                      ? colors.error
-                      : item.type === 'tertiary'
-                      ? colors.tertiary
-                      : colors.secondary
-                  }
-                  style={styles.cardIcon}
-                />
-                <View style={styles.cardTextCol}>
-                  <Text style={styles.attentionCardTitle}>{item.title}</Text>
-                  <Text style={styles.attentionCardSub}>{item.sub}</Text>
-                </View>
-              </View>
-            ))}
-          </View>
-        </View>
-
-        {/* Recent Activity */}
-        <View style={styles.sectionGap}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recent Activity</Text>
-            <TouchableOpacity activeOpacity={0.7}>
-              <Text style={styles.viewAllText}>View All</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.activityCard}>
-            <View style={styles.timelineList}>
-              {/* Vertical line connector */}
-              <View style={styles.timelineLine} />
-
-              {(dashboardData?.recentActivities || initialSocietyData.recentActivities).map((act: any, index: number) => (
-                <View key={act.id} style={styles.timelineItem}>
-                  <View
-                    style={[
-                      styles.timelineDotOuter,
-                      { borderColor: act.active ? colors.primary : colors.surfaceVariant },
-                    ]}
-                  >
-                    <View
-                      style={[
-                        styles.timelineDotInner,
-                        { backgroundColor: act.active ? colors.primary : colors.surfaceVariant },
-                      ]}
-                    />
-                  </View>
-                  <View style={styles.timelineContent}>
-                    <Text style={styles.timelineTitle}>{act.title}</Text>
-                    <Text style={styles.timelineTime}>{act.time}</Text>
+                        : colors.secondary
+                    }
+                    style={styles.cardIcon}
+                  />
+                  <View style={styles.cardTextCol}>
+                    <Text style={styles.attentionCardTitle}>{item.title}</Text>
+                    <Text style={styles.attentionCardSub}>{item.sub}</Text>
                   </View>
                 </View>
               ))}
             </View>
           </View>
-        </View>
+        )}
+
+        {/* Recent Activity */}
+        {recentActivities.length > 0 && (
+          <View style={styles.sectionGap}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Recent Activity</Text>
+              <TouchableOpacity activeOpacity={0.7}>
+                <Text style={styles.viewAllText}>View All</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.activityCard}>
+              <View style={styles.timelineList}>
+                {/* Vertical line connector */}
+                <View style={styles.timelineLine} />
+
+                {recentActivities.map((act: any, index: number) => (
+                  <View key={act.id || index} style={styles.timelineItem}>
+                    <View
+                      style={[
+                        styles.timelineDotOuter,
+                        { borderColor: act.active ? colors.primary : colors.surfaceVariant },
+                      ]}
+                    >
+                      <View
+                        style={[
+                          styles.timelineDotInner,
+                          { backgroundColor: act.active ? colors.primary : colors.surfaceVariant },
+                        ]}
+                      />
+                    </View>
+                    <View style={styles.timelineContent}>
+                      <Text style={styles.timelineTitle}>{act.title}</Text>
+                      <Text style={styles.timelineTime}>{act.time}</Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            </View>
+          </View>
+        )}
 
         {/* Upcoming */}
-        <View style={[styles.sectionGap, { marginBottom: 32 }]}>
-          <Text style={[styles.sectionTitle, { marginBottom: 16 }]}>Upcoming</Text>
+        {upcomingEvents.length > 0 && (
+          <View style={[styles.sectionGap, { marginBottom: 32 }]}>
+            <Text style={[styles.sectionTitle, { marginBottom: 16 }]}>Upcoming</Text>
 
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.upcomingScroll}>
-            {(dashboardData?.upcomingEvents || initialSocietyData.upcomingEvents).map((evt: any, index: number) => (
-              <View
-                key={evt._id || evt.id || index}
-                style={[
-                  styles.eventCard,
-                  {
-                    backgroundColor:
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.upcomingScroll}>
+              {upcomingEvents.map((evt: any, index: number) => (
+                <View
+                  key={evt._id || evt.id || index}
+                  style={[
+                    styles.eventCard,
+                    {
+                      backgroundColor:
+                        evt.bgClass === 'primaryContainer'
+                          ? colors.primaryContainer
+                          : colors.secondaryContainer,
+                    },
+                  ]}
+                >
+                  <MaterialIcons
+                    name={evt.icon as any}
+                    size={32}
+                    color={
                       evt.bgClass === 'primaryContainer'
-                        ? colors.primaryContainer
-                        : colors.secondaryContainer,
-                  },
-                ]}
-              >
-                <MaterialIcons
-                  name={evt.icon as any}
-                  size={32}
-                  color={
-                    evt.bgClass === 'primaryContainer'
-                      ? colors.onPrimaryContainer
-                      : colors.onSecondaryContainer
-                  }
-                  style={{ opacity: 0.8, marginBottom: 12 }}
-                />
-                <Text
-                  style={[
-                    styles.eventTitle,
-                    {
-                      color:
-                        evt.bgClass === 'primaryContainer'
-                          ? colors.onPrimaryContainer
-                          : colors.onSecondaryContainer,
-                    },
-                  ]}
-                >
-                  {evt.title}
-                </Text>
-                <Text
-                  style={[
-                    styles.eventTime,
-                    {
-                      color:
-                        evt.bgClass === 'primaryContainer'
-                          ? colors.onPrimaryContainer
-                          : colors.onSecondaryContainer,
-                    },
-                  ]}
-                >
-                  {evt.time}
-                </Text>
-              </View>
-            ))}
-          </ScrollView>
-        </View>
+                        ? colors.onPrimaryContainer
+                        : colors.onSecondaryContainer
+                    }
+                    style={{ opacity: 0.8, marginBottom: 12 }}
+                  />
+                  <Text
+                    style={[
+                      styles.eventTitle,
+                      {
+                        color:
+                          evt.bgClass === 'primaryContainer'
+                            ? colors.onPrimaryContainer
+                            : colors.onSecondaryContainer,
+                      },
+                    ]}
+                  >
+                    {evt.title}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.eventTime,
+                      {
+                        color:
+                          evt.bgClass === 'primaryContainer'
+                            ? colors.onPrimaryContainer
+                            : colors.onSecondaryContainer,
+                      },
+                    ]}
+                  >
+                    {evt.time}
+                  </Text>
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        )}
       </ScrollView>
 
       <StatBreakdownModal
@@ -284,6 +302,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.surface,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+    gap: 12,
+  },
+  loadingText: {
+    ...typography.bodyMd,
+    color: colors.onSurfaceVariant,
   },
   scrollContent: {
     paddingBottom: 100,

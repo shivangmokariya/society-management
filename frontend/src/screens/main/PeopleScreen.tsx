@@ -24,7 +24,7 @@ import { PaymentHistoryModal } from '../../components/PaymentHistoryModal';
 export const PeopleScreen: React.FC<{ navigation: any }> = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('All');
-  const [residents, setResidents] = useState<any[]>(initialSocietyData.residents);
+  const [residents, setResidents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Payment Modal state
@@ -33,18 +33,15 @@ export const PeopleScreen: React.FC<{ navigation: any }> = () => {
   const [societySettings, setSocietySettings] = useState<{
     maintenanceAmount?: number;
     maintenanceDueDate?: string;
-  }>({
-    maintenanceAmount: initialSocietyData.maintenanceAmount,
-    maintenanceDueDate: initialSocietyData.maintenanceDueDate,
-  });
+  }>({});
 
   const fetchSocietyDetails = async () => {
     try {
       const res = await societyService.getSocietyDetails();
       if (res.success && res.data) {
         setSocietySettings({
-          maintenanceAmount: res.data.maintenanceAmount || initialSocietyData.maintenanceAmount,
-          maintenanceDueDate: res.data.maintenanceDueDate || initialSocietyData.maintenanceDueDate,
+          maintenanceAmount: res.data.maintenanceAmount,
+          maintenanceDueDate: res.data.maintenanceDueDate,
         });
       }
     } catch (err) {
@@ -55,7 +52,7 @@ export const PeopleScreen: React.FC<{ navigation: any }> = () => {
   const fetchResidentsList = async () => {
     try {
       const res = await residentService.getResidents();
-      if (res.success && res.data && res.data.length > 0) {
+      if (res.success && res.data) {
         setResidents(res.data);
       }
     } catch (err) {
@@ -151,7 +148,13 @@ export const PeopleScreen: React.FC<{ navigation: any }> = () => {
 
         {/* Directory List */}
         <View style={styles.directoryList}>
-          {filteredResidents.map((r) => (
+          {loading && residents.length === 0 ? (
+            <View style={styles.loadingBox}>
+              <ActivityIndicator size="large" color={colors.primary} />
+              <Text style={styles.loadingText}>Loading Residents...</Text>
+            </View>
+          ) : (
+            filteredResidents.map((r) => (
             <TouchableOpacity
               key={r.id || r._id}
               style={styles.flatCard}
@@ -270,7 +273,7 @@ export const PeopleScreen: React.FC<{ navigation: any }> = () => {
                 </View>
               )}
             </TouchableOpacity>
-          ))}
+          )))}
         </View>
       </ScrollView>
 
@@ -355,6 +358,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.containerPaddingMobile,
     gap: 16,
     paddingBottom: 24,
+  },
+  loadingBox: {
+    padding: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    ...typography.bodyMd,
+    color: colors.onSurfaceVariant,
   },
   flatCard: {
     backgroundColor: colors.surfaceContainerLowest,

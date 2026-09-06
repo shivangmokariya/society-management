@@ -24,6 +24,12 @@ class ApiError extends Error {
     return new ApiError(404, msg);
   }
 
+  static tooManyRequests(msg = 'Too Many Requests', retryAfterSeconds = null) {
+    const err = new ApiError(429, msg);
+    if (retryAfterSeconds) err.retryAfterSeconds = retryAfterSeconds;
+    return err;
+  }
+
   static internal(msg = 'Internal Server Error') {
     return new ApiError(500, msg);
   }

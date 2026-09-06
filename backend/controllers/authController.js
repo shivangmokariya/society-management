@@ -61,6 +61,12 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
   return ApiResponse.success(res, result.message, result);
 });
 
+exports.verifyOtp = asyncHandler(async (req, res) => {
+  const { email, otp } = req.body;
+  const result = await authService.verifyOtp(email, otp);
+  return ApiResponse.success(res, result.message, result);
+});
+
 exports.resetPassword = asyncHandler(async (req, res) => {
   const { token } = req.params;
   const { newPassword } = req.body;

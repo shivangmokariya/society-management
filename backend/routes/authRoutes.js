@@ -46,6 +46,16 @@ router.post(
 );
 
 router.post(
+  '/verify-otp',
+  [
+    body('email').isEmail().withMessage('Valid email address is required'),
+    body('otp').isLength({ min: 6, max: 6 }).withMessage('6-digit OTP code is required'),
+  ],
+  validate,
+  authController.verifyOtp
+);
+
+router.post(
   '/reset-password/:token',
   [body('newPassword').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')],
   validate,

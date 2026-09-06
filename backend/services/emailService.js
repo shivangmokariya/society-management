@@ -271,6 +271,48 @@ class EmailService {
       return null;
     }
   }
+
+  // 3. Send Password Reset OTP Email
+  async sendOtpEmail({ email, fullName, otp }) {
+    const subject = `🔒 ${otp} is your CALM Password Reset Code`;
+    const content = `
+      <div style="text-align: center; margin-bottom: 16px;">
+        <span class="badge-pending" style="background-color: #EBF5FF; color: #1E429F;">Action Required: Verification Code</span>
+      </div>
+      <h2 class="heading">Hello ${fullName || 'User'},</h2>
+      <p class="text">
+        We received a request to reset your password for your <strong>CALM Society Management</strong> account.
+      </p>
+      <p class="text">
+        Use the following 6-digit Verification Code (OTP) to proceed with resetting your password:
+      </p>
+      <div style="background-color: #f4fbf7; border: 2px dashed #3f6651; border-radius: 16px; padding: 24px; text-align: center; margin: 24px 0;">
+        <span style="font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #3f6651; font-family: monospace;">${otp}</span>
+      </div>
+      <p class="text" style="font-size: 13px; color: #717973; text-align: center;">
+        This code is valid for <strong>10 minutes</strong>. Do not share this OTP code with anyone.
+      </p>
+      <p class="text" style="font-size: 13px; color: #999; text-align: center; margin-top: 16px;">
+        If you did not request a password reset, please ignore this email or contact support if you have concerns.
+      </p>
+    `;
+
+    const html = this.getHtmlLayout('Password Reset Code', content);
+
+    try {
+      const info = await this.transporter.sendMail({
+        from: `"${process.env.FROM_NAME || 'CALM Security'}" <${process.env.FROM_EMAIL || 'shivangmokariya.dev@gmail.com'}>`,
+        to: email,
+        subject,
+        html,
+      });
+      logger.info(`✅ [OTP EMAIL SUCCESS] OTP sent to: ${email} | MessageId: ${info.messageId}`);
+      return info;
+    } catch (error) {
+      logger.error(`❌ [OTP EMAIL FAILED] Failed to send OTP to ${email}: ${error.message}`, error);
+      return null;
+    }
+  }
 }
 
 module.exports = new EmailService();

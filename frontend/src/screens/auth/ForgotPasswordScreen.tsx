@@ -18,21 +18,28 @@ import { borderRadius, spacing } from '../../theme/spacing';
 import { getImageUrl } from '../../services/api';
 import { authService } from '../../services/authService';
 
+import { useFocusEffect } from '@react-navigation/native';
+
 interface ForgotPasswordScreenProps {
   navigation: any;
 }
 
 export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({ navigation }) => {
-  const [email, setEmail] = useState('shivangmokariya92173@gmail.com');
+  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
-  const [generatedToken, setGeneratedToken] = useState<string | null>(null);
 
-  const handleSendResetLink = async () => {
+  useFocusEffect(
+    React.useCallback(() => {
+      setErrorMsg('');
+      setSuccessMsg('');
+    }, [])
+  );
+
+  const handleSendOtp = async () => {
     setErrorMsg('');
     setSuccessMsg('');
-    setGeneratedToken(null);
 
     if (!email || !email.includes('@')) {
       setErrorMsg('Please enter a valid email address.');
@@ -43,9 +50,10 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({ navi
     try {
       const res = await authService.forgotPassword(email);
       if (res.success) {
-        const token = res.data?.resetToken || 'demo-reset-token-' + Date.now();
-        setGeneratedToken(token);
-        setSuccessMsg(res.message || 'Password reset link sent to your email address.');
+        navigation.navigate('VerifyOtp', {
+          email: email.trim(),
+          cooldownSeconds: res.data?.cooldownSeconds || 120,
+        });
       } else {
         setErrorMsg(res.message || 'No account found with this email address.');
       }
@@ -86,7 +94,7 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({ navi
             </View>
             <Text style={styles.title}>Forgot Password?</Text>
             <Text style={styles.subtitle}>
-              Enter your registered email address and we'll send you an application link to reset your password.
+              Enter your registered email address to receive a 6-digit OTP code to reset your password.
             </Text>
           </View>
 
@@ -98,23 +106,13 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({ navi
             </View>
           )}
 
-          {/* Success Banner with Clean Reset Link */}
+          {/* Success Banner */}
           {!!successMsg && (
             <View style={styles.successBox}>
               <View style={styles.successRow}>
                 <MaterialIcons name="check-circle" size={20} color="#0e6251" />
                 <Text style={styles.successText}>{successMsg}</Text>
               </View>
-              {!!generatedToken && (
-                <TouchableOpacity
-                  style={styles.openResetBtn}
-                  activeOpacity={0.85}
-                  onPress={() => navigation.navigate('ResetPassword', { token: generatedToken })}
-                >
-                  <MaterialIcons name="open-in-new" size={16} color="#fff" />
-                  <Text style={styles.openResetBtnText}>Click to Open Reset Link</Text>
-                </TouchableOpacity>
-              )}
             </View>
           )}
 
@@ -147,13 +145,13 @@ export const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({ navi
             <TouchableOpacity
               style={[styles.submitBtn, loading && { opacity: 0.7 }]}
               activeOpacity={0.8}
-              onPress={handleSendResetLink}
+              onPress={handleSendOtp}
               disabled={loading}
             >
               {loading ? (
                 <ActivityIndicator color={colors.onPrimary} size="small" />
               ) : (
-                <Text style={styles.submitBtnText}>Send Password Reset Link</Text>
+                <Text style={styles.submitBtnText}>Send Email</Text>
               )}
             </TouchableOpacity>
           </View>

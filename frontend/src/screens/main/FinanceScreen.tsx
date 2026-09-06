@@ -51,6 +51,18 @@ export const FinanceScreen: React.FC<{ navigation: any }> = () => {
     }, [])
   );
 
+  if (loading && !summary) {
+    return (
+      <View style={styles.container}>
+        <Header title="Finance" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>Loading Finance Details...</Text>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <Header title="Finance" />
@@ -72,10 +84,10 @@ export const FinanceScreen: React.FC<{ navigation: any }> = () => {
         {/* Header Balance Banner */}
         <View style={styles.balanceHeader}>
           <Text style={styles.balanceLabel}>Society Balance</Text>
-          <Text style={styles.balanceAmount}>{summary?.detailedBalance || initialSocietyData.detailedBalance}</Text>
+          <Text style={styles.balanceAmount}>{summary?.detailedBalance || '₹0'}</Text>
           <View style={styles.trendBadge}>
             <MaterialIcons name="trending-up" size={16} color={colors.primary} />
-            <Text style={styles.trendText}>{summary?.balanceTrend || initialSocietyData.balanceTrend}</Text>
+            <Text style={styles.trendText}>{summary?.balanceTrend || '+0% this month'}</Text>
           </View>
         </View>
 
@@ -85,47 +97,24 @@ export const FinanceScreen: React.FC<{ navigation: any }> = () => {
             <View style={[styles.cardTopStrip, { backgroundColor: colors.primary }]} />
             <MaterialIcons name="arrow-downward" size={24} color={colors.primary} style={styles.flowIcon} />
             <Text style={styles.flowLabel}>Total Inflow</Text>
-            <Text style={styles.flowAmount}>{summary?.totalInflow || initialSocietyData.totalInflow}</Text>
+            <Text style={styles.flowAmount}>{summary?.totalInflow || '₹0'}</Text>
           </View>
 
           <View style={styles.outflowCard}>
             <View style={[styles.cardTopStrip, { backgroundColor: colors.error }]} />
             <MaterialIcons name="arrow-upward" size={24} color={colors.error} style={styles.flowIcon} />
             <Text style={styles.flowLabel}>Total Outflow</Text>
-            <Text style={styles.flowAmount}>{summary?.totalOutflow || initialSocietyData.totalOutflow}</Text>
-          </View>
-        </View>
-
-        {/* Pending Approvals Alert */}
-        <View style={styles.sectionGap}>
-          <View style={styles.approvalCard}>
-            <View style={styles.approvalIconCircle}>
-              <MaterialIcons name="assignment-late" size={20} color={colors.secondary} />
-            </View>
-            <View style={styles.approvalContent}>
-              <Text style={styles.approvalTitle}>
-                Approval Needed ({initialSocietyData.pendingApprovalsCount})
-              </Text>
-              <Text style={styles.approvalDesc}>
-                {initialSocietyData.pendingApprovalItem.title} • {initialSocietyData.pendingApprovalItem.amount}
-              </Text>
-              <View style={styles.approvalBtnRow}>
-                <TouchableOpacity style={styles.reviewBtn} activeOpacity={0.8}>
-                  <Text style={styles.reviewBtnText}>Review</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.dismissBtn} activeOpacity={0.8}>
-                  <Text style={styles.dismissBtnText}>Dismiss</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+            <Text style={styles.flowAmount}>{summary?.totalOutflow || '₹0'}</Text>
           </View>
         </View>
 
         {/* Major Expenses Breakdown */}
-        <View style={styles.sectionGap}>
-          <Text style={styles.sectionTitle}>Major Expenses</Text>
-          <ExpenseBreakdownBar categories={summary?.majorExpenses || initialSocietyData.majorExpenses} />
-        </View>
+        {summary?.majorExpenses && summary.majorExpenses.length > 0 && (
+          <View style={styles.sectionGap}>
+            <Text style={styles.sectionTitle}>Major Expenses</Text>
+            <ExpenseBreakdownBar categories={summary.majorExpenses} />
+          </View>
+        )}
 
         {/* Recent Transactions */}
         <View style={[styles.sectionGap, { marginBottom: 32 }]}>
@@ -137,7 +126,7 @@ export const FinanceScreen: React.FC<{ navigation: any }> = () => {
           </View>
 
           <View style={styles.transactionsCard}>
-            {(transactions.length > 0 ? transactions : initialSocietyData.transactions).map((tx: any, idx: number) => (
+            {transactions.map((tx: any, idx: number) => (
               <View key={tx._id || tx.id || idx} style={styles.txRow}>
                 <View
                   style={[
@@ -194,6 +183,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.surface,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+    gap: 12,
+  },
+  loadingText: {
+    ...typography.bodyMd,
+    color: colors.onSurfaceVariant,
   },
   scrollContent: {
     paddingBottom: 100,

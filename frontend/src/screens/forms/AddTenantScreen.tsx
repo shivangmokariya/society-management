@@ -21,8 +21,8 @@ import { residentService } from '../../services/residentService';
 export const AddTenantScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
-  const [selectedFlat, setSelectedFlat] = useState('A-101');
-  const [moveInDate, setMoveInDate] = useState('2026-10-01');
+  const [selectedFlat, setSelectedFlat] = useState('');
+  const [moveInDate, setMoveInDate] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');

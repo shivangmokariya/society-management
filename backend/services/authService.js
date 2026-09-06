@@ -198,21 +198,118 @@ class AuthService {
   }
 
   async forgotPassword(email) {
-    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    const normalizedEmail = (email || '').toLowerCase().trim();
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
       throw ApiError.notFound('No account found with this email address. Please check your email.');
+    }
+
+    const now = Date.now();
+
+    // 1. Check 24-hour block status
+    if (user.otpBlockedUntil && new Date(user.otpBlockedUntil).getTime() > now) {
+      const remainingMs = new Date(user.otpBlockedUntil).getTime() - now;
+      const hoursLeft = Math.ceil(remainingMs / (1000 * 60 * 60));
+      throw ApiError.tooManyRequests(
+        `Your account is temporarily blocked from requesting OTPs for 24 hours due to exceeding 15 daily attempts. Please try again in ~${hoursLeft} hour(s).`
+      );
+    }
+
+    // Filter request timestamps within the last 24 hours
+    const timestamps24h = (user.otpRequestTimestamps || []).filter(
+      (ts) => new Date(ts).getTime() > now - 24 * 60 * 60 * 1000
+    );
+
+    // 2. Check 24-hour limit (max 15 attempts per day)
+    if (timestamps24h.length >= 15) {
+      user.otpBlockedUntil = new Date(now + 24 * 60 * 60 * 1000);
+      user.otpRequestTimestamps = timestamps24h;
+      await user.save({ validateBeforeSave: false });
+      throw ApiError.tooManyRequests(
+        'You have reached the maximum of 15 OTP requests for today. Your account is blocked from requesting OTPs for 24 hours.'
+      );
+    }
+
+    // 3. Check 2-minute cooldown (1 OTP per 2 minutes)
+    if (user.lastOtpSentAt) {
+      const lastSentTime = new Date(user.lastOtpSentAt).getTime();
+      const elapsedMs = now - lastSentTime;
+      if (elapsedMs < 2 * 60 * 1000) {
+        const remainingSeconds = Math.ceil((2 * 60 * 1000 - elapsedMs) / 1000);
+        throw ApiError.tooManyRequests(
+          `Please wait ${remainingSeconds} seconds before requesting another OTP.`,
+          remainingSeconds
+        );
+      }
+    }
+
+    // 4. Check 15-minute window limit (max 5 OTPs per 15 minutes)
+    const timestamps15m = timestamps24h.filter(
+      (ts) => new Date(ts).getTime() > now - 15 * 60 * 1000
+    );
+    if (timestamps15m.length >= 5) {
+      throw ApiError.tooManyRequests(
+        'Maximum 5 OTP requests allowed within 15 minutes. Please wait before requesting another code.'
+      );
+    }
+
+    // Generate 6-digit numeric OTP code
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Update OTP metadata & tracking arrays
+    timestamps24h.push(new Date(now));
+    user.otpRequestTimestamps = timestamps24h;
+    user.lastOtpSentAt = new Date(now);
+    user.resetPasswordOtp = otp;
+    user.resetPasswordOtpExpire = new Date(now + 10 * 60 * 1000); // 10 minutes expiry
+
+    await user.save({ validateBeforeSave: false });
+
+    // Send email with OTP
+    await emailService.sendOtpEmail({
+      email: user.email,
+      fullName: user.fullName,
+      otp,
+    });
+
+    return {
+      message: 'A 6-digit OTP code has been sent to your email address.',
+      email: user.email,
+      cooldownSeconds: 120,
+    };
+  }
+
+  async verifyOtp(email, otp) {
+    if (!email || !otp) {
+      throw ApiError.badRequest('Email address and 6-digit OTP code are required.');
+    }
+
+    const normalizedEmail = (email || '').toLowerCase().trim();
+    const user = await User.findOne({ email: normalizedEmail });
+
+    if (
+      !user ||
+      !user.resetPasswordOtp ||
+      user.resetPasswordOtp !== String(otp).trim() ||
+      !user.resetPasswordOtpExpire ||
+      user.resetPasswordOtpExpire < Date.now()
+    ) {
+      throw ApiError.badRequest('Invalid or expired OTP code. Please request a new OTP.');
     }
 
     const crypto = require('crypto');
     const resetToken = crypto.randomBytes(32).toString('hex');
     const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
 
+    // Clear OTP and set password reset token
+    user.resetPasswordOtp = undefined;
+    user.resetPasswordOtpExpire = undefined;
     user.resetPasswordToken = hashedToken;
-    user.resetPasswordExpire = Date.now() + 60 * 60 * 1000; // 1 hour expiry
+    user.resetPasswordExpire = Date.now() + 15 * 60 * 1000; // 15 minutes expiry
     await user.save({ validateBeforeSave: false });
 
     return {
-      message: 'Password reset link sent to your email address.',
+      message: 'OTP verified successfully.',
       resetToken,
       email: user.email,
     };
@@ -221,6 +318,10 @@ class AuthService {
   async resetPassword(token, newPassword) {
     if (!token) {
       throw ApiError.badRequest('Invalid or missing password reset token.');
+    }
+
+    if (!newPassword || newPassword.length < 6) {
+      throw ApiError.badRequest('New password must be at least 6 characters long.');
     }
 
     const crypto = require('crypto');
@@ -232,7 +333,7 @@ class AuthService {
     });
 
     if (!user) {
-      throw ApiError.badRequest('Invalid or expired password reset token. Please request a new link.');
+      throw ApiError.badRequest('Invalid or expired password reset token. Please request a new OTP.');
     }
 
     user.password = newPassword;
