@@ -2,8 +2,4 @@ node_modules/
 .expo/
 dist/
 ios/
-.gradle/
-android/.gradle/
-android/build/
-android/app/build/
-android/local.properties
+local.properties
