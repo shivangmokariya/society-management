@@ -17,48 +17,42 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<UserProfile | null>(() => {
-    const storedUser = storage.getItem('calm_user');
-    const storedExpiry = storage.getItem('calm_expiry');
-    if (storedUser && storedExpiry && Date.now() < Number(storedExpiry)) {
-      try {
-        return JSON.parse(storedUser);
-      } catch (e) {
-        return null;
-      }
-    }
-    return null;
-  });
-
-  const [token, setToken] = useState<string | null>(() => {
-    const storedToken = storage.getItem('calm_token');
-    const storedExpiry = storage.getItem('calm_expiry');
-    if (storedToken && storedExpiry && Date.now() < Number(storedExpiry)) {
-      return storedToken;
-    }
-    return null;
-  });
-
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  const logout = async () => {
+    setUser(null);
+    setToken(null);
+    await storage.removeItem('calm_token');
+    await storage.removeItem('calm_user');
+    await storage.removeItem('calm_expiry');
+  };
 
   // Restore and verify session on initial app boot
   useEffect(() => {
     const restoreSession = async () => {
       try {
-        const storedToken = storage.getItem('calm_token');
-        const storedExpiry = storage.getItem('calm_expiry');
+        const storedToken = await storage.getItem('calm_token');
+        const storedUser = await storage.getItem('calm_user');
+        const storedExpiry = await storage.getItem('calm_expiry');
 
-        if (storedToken && storedExpiry && Date.now() < Number(storedExpiry)) {
-          setToken(storedToken);
-          const res = await authService.getMe(storedToken);
-          if (res.success && res.data) {
-            setUser(res.data);
-            storage.setItem('calm_user', JSON.stringify(res.data));
-          } else {
-            logout();
+        if (storedToken && storedUser && storedExpiry && Date.now() < Number(storedExpiry)) {
+          try {
+            const parsedUser = JSON.parse(storedUser);
+            setToken(storedToken);
+            setUser(parsedUser);
+
+            const res = await authService.getMe(storedToken);
+            if (res.success && res.data) {
+              setUser(res.data);
+              await storage.setItem('calm_user', JSON.stringify(res.data));
+            }
+          } catch (e) {
+            await logout();
           }
         } else if (storedToken || storedExpiry) {
-          logout();
+          await logout();
         }
       } catch (err) {
         console.warn('Session restoration failed:', err);
@@ -79,9 +73,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setToken(newToken);
       setUser(newUser);
-      storage.setItem('calm_token', newToken);
-      storage.setItem('calm_user', JSON.stringify(newUser));
-      storage.setItem('calm_expiry', expiryTimestamp.toString());
+      await storage.setItem('calm_token', newToken);
+      await storage.setItem('calm_user', JSON.stringify(newUser));
+      await storage.setItem('calm_expiry', expiryTimestamp.toString());
     } else {
       throw new Error(res.message || 'Login failed');
     }
@@ -99,7 +93,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const res = await authService.updateProfile(token, payload);
     if (res.success && res.data) {
       setUser(res.data);
-      storage.setItem('calm_user', JSON.stringify(res.data));
+      await storage.setItem('calm_user', JSON.stringify(res.data));
     } else {
       throw new Error(res.message || 'Profile update failed');
     }
@@ -113,14 +107,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } else {
       throw new Error(res.message || 'Avatar upload failed');
     }
-  };
-
-  const logout = () => {
-    setUser(null);
-    setToken(null);
-    storage.removeItem('calm_token');
-    storage.removeItem('calm_user');
-    storage.removeItem('calm_expiry');
   };
 
   return (
